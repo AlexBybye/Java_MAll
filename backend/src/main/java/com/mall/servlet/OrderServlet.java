@@ -181,6 +181,7 @@ public class OrderServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String userIdStr = (String) request.getAttribute("userId");
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin"); // 获取管理员标识
         if (userIdStr == null) {
             sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
                     new HashMap<String, String>() {{ put("message", "未登录或Token无效。"); }});
@@ -198,9 +199,19 @@ public class OrderServlet extends HttpServlet {
                 result.put("success", true);
                 result.put("orders", orders);
                 sendJsonResponse(response, HttpServletResponse.SC_OK, result);
-
+            } else if (pathInfo.equals("/all")) {
+                // 情况 2: GET /api/order/all - 获取所有订单（仅管理员）
+                if (isAdmin == null || !isAdmin) {
+                    sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                            new HashMap<String, String>() {{ put("message", "无权访问此资源。"); }});
+                    return;
+                }
+                List<Map<String, Object>> allOrders = orderDAO.getAllOrders();
+                result.put("success", true);
+                result.put("orders", allOrders);
+                sendJsonResponse(response, HttpServletResponse.SC_OK, result);
             } else {
-                // 情况 2: GET /api/order/{id} - 获取单个订单详情
+                // 情况 3: GET /api/order/{id} - 获取单个订单详情
                 String[] pathParts = pathInfo.split("/");
                 if (pathParts.length == 2 && !pathParts[1].isEmpty()) {
                     int orderId = Integer.parseInt(pathParts[1]);
@@ -213,8 +224,9 @@ public class OrderServlet extends HttpServlet {
                         return;
                     }
 
-                    // 安全性检查：确保该订单属于当前用户
-                    if (!orderDetails.get("customerId").equals(customerId)) {
+                    // 修复越权问题：显式转换类型确保比较准确性
+                    int orderCustomerId = (Integer) orderDetails.get("customerId");
+                    if (orderCustomerId != customerId && (isAdmin == null || !isAdmin)) {
                         sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN,
                                 new HashMap<String, String>() {{ put("message", "无权访问此订单。"); }});
                         return;
@@ -228,6 +240,146 @@ public class OrderServlet extends HttpServlet {
                     sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
                             new HashMap<String, String>() {{ put("message", "错误的请求路径格式。"); }});
                 }
+            }
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                    new HashMap<String, String>() {{ put("message", "订单ID格式错误。"); }});
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    new HashMap<String, String>() {{ put("message", "服务器内部错误：" + e.getMessage()); }});
+        }
+    }
+
+    // --- 删除订单 (DELETE /api/order/{id}) ---
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String userIdStr = (String) request.getAttribute("userId");
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin"); // 获取管理员标识
+
+        if (userIdStr == null) {
+            sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    new HashMap<String, String>() {{ put("message", "未登录或Token无效。"); }});
+            return;
+        }
+
+        int customerId = Integer.parseInt(userIdStr);
+        String pathInfo = request.getPathInfo();
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 解析请求路径获取订单ID
+            String[] pathParts = pathInfo.split("/");
+            if (pathParts.length == 2 && !pathParts[1].isEmpty()) {
+                int orderId = Integer.parseInt(pathParts[1]);
+
+                // 验证订单权限
+                Map<String, Object> orderDetails = orderDAO.getOrderById(orderId);
+                if (orderDetails == null) {
+                    sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND,
+                            new HashMap<String, String>() {{ put("message", "订单未找到。"); }});
+                    return;
+                }
+
+                int orderCustomerId = (Integer) orderDetails.get("customerId");
+                if (orderCustomerId != customerId && (isAdmin == null || !isAdmin)) {
+                    sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                            new HashMap<String, String>() {{ put("message", "无权删除此订单。"); }});
+                    return;
+                }
+
+                // 执行删除操作
+                boolean success = orderDAO.deleteOrder(orderId, customerId, isAdmin != null && isAdmin);
+
+                if (success) {
+                    result.put("success", true);
+                    result.put("message", "订单删除成功。");
+                    sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+                } else {
+                    result.put("success", false);
+                    result.put("message", "订单删除失败。");
+                    sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, result);
+                }
+
+            } else {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                        new HashMap<String, String>() {{ put("message", "错误的请求路径格式，应为 /api/order/{id}。"); }});
+            }
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                    new HashMap<String, String>() {{ put("message", "订单ID格式错误。"); }});
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    new HashMap<String, String>() {{ put("message", "服务器内部错误：" + e.getMessage()); }});
+        }
+    }
+
+    // --- 更新订单状态 (PUT /api/order/{id}/status) ---
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String userIdStr = (String) request.getAttribute("userId");
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin"); // 获取管理员标识
+        
+        // 验证用户是否登录
+        if (userIdStr == null) {
+            sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    new HashMap<String, String>() {{ put("message", "未登录或Token无效。"); }});
+            return;
+        }
+        
+        // 验证用户是否是管理员
+        if (isAdmin == null || !isAdmin) {
+            sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN,
+                    new HashMap<String, String>() {{ put("message", "仅管理员有权更新订单状态。"); }});
+            return;
+        }
+
+        String pathInfo = request.getPathInfo();
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 解析请求路径获取订单ID
+            String[] pathParts = pathInfo.split("/");
+            if (pathParts.length == 3 && pathParts[2].equals("status") && !pathParts[1].isEmpty()) {
+                int orderId = Integer.parseInt(pathParts[1]);
+
+                // 解析请求体获取新的订单状态
+                try (BufferedReader reader = request.getReader()) {
+                    Map<String, Object> requestData = gson.fromJson(reader, Map.class);
+                    // 同时支持"orderStatus"和"status"字段名
+                    String newStatus = (String) requestData.get("orderStatus");
+                    if (newStatus == null) {
+                        newStatus = (String) requestData.get("status");
+                    }
+
+                    if (newStatus == null || newStatus.isEmpty()) {
+                        sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                                new HashMap<String, String>() {{ put("message", "订单状态不能为空。"); }});
+                        return;
+                    }
+
+                    // 更新订单状态
+                    boolean success = orderDAO.updateOrderStatus(orderId, newStatus);
+
+                    if (success) {
+                        result.put("success", true);
+                        result.put("message", "订单状态更新成功。");
+                        sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+                    } else {
+                        result.put("success", false);
+                        result.put("message", "订单状态更新失败，订单可能不存在。");
+                        sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, result);
+                    }
+                }
+
+            } else {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,
+                        new HashMap<String, String>() {{ put("message", "错误的请求路径格式，应为 /api/order/{id}/status。"); }});
             }
         } catch (NumberFormatException e) {
             sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST,

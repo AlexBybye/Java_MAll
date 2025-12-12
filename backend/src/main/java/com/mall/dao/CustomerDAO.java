@@ -92,7 +92,7 @@ public class CustomerDAO {
 
     public Customer loginCustomer(String username, String password) {
         // 实际项目中，password 应该是加密后的哈希值进行比对
-        String sql = "SELECT id, username, password, email, phone FROM customer WHERE username = ?";
+        String sql = "SELECT id, username, password, email, phone, is_admin FROM customer WHERE username = ?";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -109,6 +109,7 @@ public class CustomerDAO {
                         customer.setUsername(rs.getString("username"));
                         customer.setEmail(rs.getString("email"));
                         customer.setPhone(rs.getString("phone"));
+                        customer.setAdmin(rs.getBoolean("is_admin")); // 新增：设置管理员标识
                         // 不返回密码给前端
                         return customer;
                     }

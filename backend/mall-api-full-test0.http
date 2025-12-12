@@ -6,9 +6,10 @@
 @testEmail = testuser_complete@example.com
 @testPhone = 13800000001
 @adminUsername = admin
-@adminPassword = admin123
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNSIsInVzZXJuYW1lIjoidGVzdHVzZXJfY29tcGxldGUiLCJpYXQiOjE3NjU1NjYxNzcsImV4cCI6MTc2NTU2OTc3N30.C731_9K-635-o9PXMamsYCB9QqXRi8_kn12MDyeLlfI
-### ===============================================================================
+@adminPassword = adminVIP
+@adminPhone = 10000000000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNSIsInVzZXJuYW1lIjoidGVzdHVzZXJfY29tcGxldGUiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzY1NTY5ODA0LCJleHAiOjE3NjU1NzM0MDR9.hOm4lo14pMDYPv8HHjcLPka77aPJxd4le09vqUqKcCA
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNiIsInVzZXJuYW1lIjoiYWRtaW4iLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NjU1NzE4MTcsImV4cCI6MTc2NTU3NTQxN30.LWgDtBWUE0XB-Kkq1MdZKDP7VONa6FBvJRwgMwvydmg
 ### 1. 顾客管理模块 (Customer Management)
 ### ===============================================================================
 
@@ -68,10 +69,14 @@ Content-Type: application/json
     "password": "{{adminPassword}}"
 }
 
+> {%
+    client.global.set("adminToken", response.body.token);
+%}
+
 ### 2.4 添加新产品 (ProductServlet)
 POST {{baseUrl}}/product
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 {
   "name": "测试产品 - 手机",
@@ -84,7 +89,7 @@ Authorization: Bearer {{token}}
 ### 2.5 更新产品信息 (ProductServlet)
 PUT {{baseUrl}}/product/2
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 {
   "name": "测试产品 - 手机 (更新)",
@@ -97,7 +102,7 @@ Authorization: Bearer {{token}}
 ### 2.6 删除产品 (ProductServlet)
 DELETE {{baseUrl}}/product/3
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### ===============================================================================
 ### 3. 购物车模块 (Cart Management)
@@ -111,6 +116,10 @@ Content-Type: application/json
     "username": "{{testUsername}}",
     "password": "{{testPassword}}"
 }
+
+> {%
+    client.global.set("token", response.body.token);
+%}
 
 ### 3.2 添加商品到购物车 (CartServlet)
 POST {{baseUrl}}/cart
@@ -167,7 +176,7 @@ Authorization: Bearer {{token}}
 
 {
   "shippingAddress": "北京市海淀区中关村大街1号",
-  "cartItemIds": [1]
+  "cartItemIds": [12]
 }
 ### 4.4 获取用户订单列表 (OrderServlet)
 GET {{baseUrl}}/order
@@ -175,7 +184,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 ### 4.5 获取单个订单详情 (OrderServlet)
-GET {{baseUrl}}/order/1  // 请根据实际orderId修改
+GET {{baseUrl}}/order/6
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -192,15 +201,19 @@ Content-Type: application/json
     "password": "{{adminPassword}}"
 }
 
+> {%
+    client.global.set("adminToken", response.body.token);
+%}
+
 ### 5.2 获取所有订单 (管理员权限) (OrderServlet)
 GET {{baseUrl}}/order/all
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 5.3 更新订单状态 (管理员权限) (OrderServlet)
-PUT {{baseUrl}}/order/1/status
+PUT {{baseUrl}}/order/3/status
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 {
   "status": "SHIPPED"
@@ -209,43 +222,38 @@ Authorization: Bearer {{token}}
 ### 5.4 获取销售统计 - 每日销售额 (StatsServlet)
 GET {{baseUrl}}/stats/daily?startDate=2025-01-01&endDate=2025-12-31
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 5.5 获取销售统计 - 月度销售额 (StatsServlet)
 GET {{baseUrl}}/stats/monthly?year=2025
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 5.6 获取销售统计 - 热销商品 (StatsServlet)
 GET {{baseUrl}}/stats/top-products?limit=10
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 5.7 获取销售统计 - 订单状态统计 (StatsServlet)
 GET {{baseUrl}}/stats/order-status
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 5.8 获取所有销售统计数据 (StatsServlet)
 GET {{baseUrl}}/stats
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### ===============================================================================
 ### 6. 测试用例清理
 ### ===============================================================================
 
 ### 6.1 删除测试用户创建的订单 (管理员权限)
-DELETE {{baseUrl}}/order/1  // 请根据实际orderId修改
+DELETE {{baseUrl}}/order/2
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### 6.2 删除测试产品 (管理员权限)
-DELETE {{baseUrl}}/product/2  // 请根据实际productId修改
+DELETE {{baseUrl}}/product/2
 Content-Type: application/json
-Authorization: Bearer {{token}}
-
-### 6.3 删除测试用户 (管理员权限)
-DELETE {{baseUrl}}/customer/{{testUsername}}
-Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}

@@ -26,7 +26,7 @@ public class JWTUtil {
      * @param username 用户名
      * @return 生成的 JWT 字符串
      */
-    public static String generateToken(int userId, String username) {
+    public static String generateToken(int userId, String username, boolean isAdmin) {
         try {
             Date now = new Date();
             Date expiryDate = new Date(now.getTime() + EXPIRATION_TIME);
@@ -35,6 +35,7 @@ public class JWTUtil {
                     .withIssuer("MallSystem") // 签发人
                     .withSubject(String.valueOf(userId)) // 主题/用户ID
                     .withClaim("username", username) // 自定义负载信息
+                    .withClaim("isAdmin", isAdmin) // 新增：添加管理员标识到Token
                     .withIssuedAt(now) // 签发时间
                     .withExpiresAt(expiryDate) // 过期时间
                     .sign(ALGORITHM); // 签名

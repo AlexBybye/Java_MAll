@@ -34,14 +34,21 @@ public class ProductServlet extends HttpServlet {
 
     // --- 1. 创建商品 (POST /api/product) ---
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    // 修改doPost方法添加管理员验证
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            // 假设我们在这里通过 AuthFilter 验证了用户权限是管理员
-            // String userId = (String) request.getAttribute("userId"); // 管理员验证逻辑...
+            // 新增：管理员权限验证
+            Boolean isAdmin = (Boolean) request.getAttribute("isAdmin");
+            if (isAdmin == null || !isAdmin) {
+                result.put("success", false);
+                result.put("message", "只有管理员才能添加商品。");
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, result);
+                return;
+            }
 
+            // 读取请求体并反序列化为Product对象
             BufferedReader reader = request.getReader();
             Product product = gson.fromJson(reader, Product.class);
 
@@ -119,8 +126,17 @@ public class ProductServlet extends HttpServlet {
 
     // --- 3. 更新商品 (PUT /api/product/{id}) ---
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    // 修改doPut方法添加管理员验证
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // 新增：管理员权限验证
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin");
+        if (isAdmin == null || !isAdmin) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "只有管理员才能更新商品。");
+            sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, result);
+            return;
+        }
 
         String pathInfo = request.getPathInfo();
         Map<String, Object> result = new HashMap<>();
@@ -166,8 +182,17 @@ public class ProductServlet extends HttpServlet {
 
     // --- 4. 删除商品 (DELETE /api/product/{id}) ---
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    // 修改doDelete方法添加管理员验证
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // 新增：管理员权限验证
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin");
+        if (isAdmin == null || !isAdmin) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "只有管理员才能删除商品。");
+            sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, result);
+            return;
+        }
 
         String pathInfo = request.getPathInfo();
         Map<String, Object> result = new HashMap<>();

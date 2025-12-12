@@ -8,6 +8,7 @@ public class Customer {
     private String password; // 实际项目中应加密
     private String email;
     private String phone;
+    private boolean isAdmin; // 新增：管理员标识
     // created_at 字段
 
     // 构造函数
@@ -19,6 +20,7 @@ public class Customer {
         this.password = password;
         this.email = email;
         this.phone = phone;
+        this.isAdmin = false; // 默认不是管理员
     }
 
     // ⭐ 重要：在 IDEA 中，使用 Alt + Insert (或右键 -> Generate...)
@@ -35,5 +37,7 @@ public class Customer {
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public boolean isAdmin() { return isAdmin; } // 新增
+    public void setAdmin(boolean admin) { isAdmin = admin; } // 新增
     // ---------------------------------
 }

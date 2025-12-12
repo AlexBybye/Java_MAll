@@ -34,13 +34,20 @@ public class StatsServlet extends HttpServlet {
 
     // --- 处理统计数据请求 (GET /api/stats/{type}) ---
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    // 修改doGet方法添加管理员验证
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String userIdStr = (String) request.getAttribute("userId");
+        Boolean isAdmin = (Boolean) request.getAttribute("isAdmin");
         Map<String, Object> result = new HashMap<>();
-
+    
         try {
+            // 新增：管理员权限验证
+            if (isAdmin == null || !isAdmin) {
+                Map<String, String> errorMsg = new HashMap<>();
+                errorMsg.put("message", "只有管理员才能查看统计数据。");
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, errorMsg);
+                return;
+            }
             // 验证用户登录状态
             if (userIdStr == null) {
                 Map<String, String> errorMsg = new HashMap<>();
@@ -118,6 +125,7 @@ public class StatsServlet extends HttpServlet {
                             break;
 
                         case "top":
+                        case "top-products":  // 添加对top-products的支持
                             // 热销商品统计 - 支持数量参数
                             String limitStr = request.getParameter("limit");
                             int limit = 10; // 默认获取前10名
@@ -150,18 +158,17 @@ public class StatsServlet extends HttpServlet {
                         default:
                             // 无效的统计类型
                             Map<String, String> errorMsg = new HashMap<>();
-                            errorMsg.put("message", "无效的统计类型。支持的类型：daily, monthly, top, status");
+                            errorMsg.put("message", "无效的统计类型。支持的类型：daily, monthly, top, top-products, status");
                             sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, errorMsg);
                     }
-
                 } else {
                     // 无效的请求路径格式
                     Map<String, String> errorMsg = new HashMap<>();
                     errorMsg.put("message", "错误的请求路径格式。");
                     sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, errorMsg);
                 }
-            }
 
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, String> errorMsg = new HashMap<>();

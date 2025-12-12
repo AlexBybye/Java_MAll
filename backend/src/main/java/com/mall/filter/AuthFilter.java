@@ -49,13 +49,10 @@ public class AuthFilter implements Filter {
 
 // ⭐ 修正路径获取方式：使用 getServletPath() 更精确地匹配
         String requestPath = req.getServletPath();
-// 如果你的项目没有配置 Servlet Path，也可以继续使用 requestURI，但我们用更精确的。
-
         System.out.println("--- AuthFilter 拦截请求: " + requestPath);
 
-// 放行登录/注册
-// ⭐ 修正后的放行逻辑
-        // 在AuthFilter的doFilter方法中，放行登录/注册后，添加对产品GET请求的放行
+// 1. 首先检查是否需要放行（重要：放在Token验证之前）
+// 放行登录/注册和产品的GET请求
         if (requestPath.endsWith("/login") || requestPath.endsWith("/register") ||
                 (requestPath.startsWith("/product") && "GET".equalsIgnoreCase(req.getMethod()))) {
             System.out.println("--- AuthFilter 放行请求: " + requestPath);
@@ -63,7 +60,8 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // 2. 获取Token
+// 2. 其他请求需要进行Token验证
+// 获取Token
         String authHeader = req.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             System.err.println("--- AuthFilter 失败: 无Token或格式错误");
@@ -74,17 +72,23 @@ public class AuthFilter implements Filter {
         String token = authHeader.substring(7);
         System.out.println("--- AuthFilter 提取Token: " + token);
 
-        // 3. 验证Token（关键：捕获所有异常）
+// 3. 验证Token（关键：捕获所有异常）
         try {
             DecodedJWT jwt = JWTUtil.verifyToken(token);
             if (jwt == null) {
                 throw new JWTVerificationException("Token验证返回空");
             }
 
+            // 新增：获取isAdmin字段
+            Boolean adminClaim = jwt.getClaim("isAdmin").asBoolean();
+            boolean isAdmin = (adminClaim != null) ? adminClaim : false;
+            String username = jwt.getClaim("username").asString();
+            
             // Token有效，存入请求属性
-            System.out.println("--- AuthFilter 成功: User ID: " + jwt.getSubject());
+            System.out.println("--- AuthFilter 成功: User ID: " + jwt.getSubject() + ", Is Admin: " + isAdmin);
             req.setAttribute("userId", jwt.getSubject());
-            req.setAttribute("username", jwt.getClaim("username").asString());
+            req.setAttribute("username", username);  // 使用前面已经获取到的username变量
+            req.setAttribute("isAdmin", isAdmin); // 新增：设置管理员标识到请求属性
             chain.doFilter(request, response);
 
         } catch (JWTVerificationException e) {

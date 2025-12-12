@@ -251,4 +251,107 @@ public class OrderDAO {
             return false;
         }
     }
+
+    /**
+     * 获取所有订单（仅管理员可用）
+     */
+    public List<Map<String, Object>> getAllOrders() {
+        List<Map<String, Object>> orders = new ArrayList<>();
+        String sql = "SELECT om.order_id, om.customer_id, om.total_amount, om.shipping_address, om.order_status, om.order_date " +
+                "FROM order_master om ORDER BY om.order_date DESC";
+    
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+    
+            while (rs.next()) {
+                Map<String, Object> order = new HashMap<>();
+                order.put("id", rs.getInt("order_id"));
+                order.put("customerId", rs.getInt("customer_id"));
+                order.put("totalAmount", rs.getBigDecimal("total_amount"));
+                order.put("shippingAddress", rs.getString("shipping_address"));
+                order.put("orderStatus", rs.getString("order_status"));
+                order.put("orderDate", rs.getTimestamp("order_date"));
+                order.put("items", getOrderItemsByOrderId(rs.getInt("order_id")));
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+    
+    /**
+     * 删除订单（包含事务处理，确保数据一致性）
+     * @param orderId 订单ID
+     * @param customerId 客户ID（用于验证权限）
+     * @param isAdmin 是否为管理员
+     * @return 是否删除成功
+     */
+    public boolean deleteOrder(int orderId, int customerId, boolean isAdmin) {
+        Connection conn = null;
+        
+        try {
+            conn = DBUtil.getConnection();
+            conn.setAutoCommit(false); // 开启事务
+            
+            // 1. 验证订单是否存在且属于该用户或管理员
+            String checkSql = "SELECT customer_id FROM order_master WHERE order_id = ?";
+            try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+                checkPs.setInt(1, orderId);
+                try (ResultSet rs = checkPs.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return false; // 订单不存在
+                    }
+                    int dbCustomerId = rs.getInt("customer_id");
+                    if (dbCustomerId != customerId && !isAdmin) {
+                        conn.rollback();
+                        return false; // 无权限删除该订单
+                    }
+                }
+            }
+            
+            // 2. 删除订单项
+            String deleteItemsSql = "DELETE FROM order_item WHERE order_id = ?";
+            try (PreparedStatement deleteItemsPs = conn.prepareStatement(deleteItemsSql)) {
+                deleteItemsPs.setInt(1, orderId);
+                deleteItemsPs.executeUpdate();
+            }
+            
+            // 3. 删除订单主表记录
+            String deleteOrderSql = "DELETE FROM order_master WHERE order_id = ?";
+            try (PreparedStatement deleteOrderPs = conn.prepareStatement(deleteOrderSql)) {
+                deleteOrderPs.setInt(1, orderId);
+                int rowsAffected = deleteOrderPs.executeUpdate();
+                if (rowsAffected == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+            
+            conn.commit(); // 事务提交
+            return true;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback(); // 发生异常时事务回滚
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
