@@ -5,7 +5,7 @@ GET https://examples.http-client.intellij.net/get
 @baseUrl = http://localhost:8080/api
 @username = testuser02
 @password = password123
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiMyIsInVzZXJuYW1lIjoidGVzdHVzZXIwMiIsImlhdCI6MTc2NTU2MjQyOSwiZXhwIjoxNzY1NTY2MDI5fQ.foXQdVjknjfh-p4_oPMHalYtK4cYyvtWNeQ9tyK_uVg
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiMyIsInVzZXJuYW1lIjoidGVzdHVzZXIwMiIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NjU1Nzc2MjIsImV4cCI6MTc2NTU4MTIyMn0.2G4GOp4YVOR1Yt6iDgsawiUZmiOAiBcxzpn515y_Pl0
 ### A. 注册新用户 (RegisterServlet)
 POST {{baseUrl}}/register
 Content-Type: application/json

@@ -35,7 +35,8 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  total: number;
+  image_url: string;
+  stock_quantity: number;
 }
 
 // --- 订单 ---

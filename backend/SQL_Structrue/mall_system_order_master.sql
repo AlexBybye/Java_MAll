@@ -32,7 +32,7 @@ CREATE TABLE `order_master` (
   PRIMARY KEY (`order_id`),
   KEY `customer_id` (`customer_id`),
   CONSTRAINT `order_master_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单主表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,7 @@ CREATE TABLE `order_master` (
 
 LOCK TABLES `order_master` WRITE;
 /*!40000 ALTER TABLE `order_master` DISABLE KEYS */;
-INSERT INTO `order_master` VALUES (2,1,'2025-12-12 17:36:44',400.00,'北京市海淀区中关村测试点','PENDING');
+INSERT INTO `order_master` VALUES (3,1,'2025-12-12 20:14:20',400.00,'北京市海淀区中关村测试点','SHIPPED'),(4,1,'2025-12-12 20:18:36',100.00,'北京市海淀区中关村测试点','PENDING'),(5,5,'2025-12-13 04:02:36',200.00,'北京市海淀区中关村大街1号','PENDING'),(6,5,'2025-12-13 04:31:31',100.00,'北京市海淀区中关村大街1号','PENDING');
 /*!40000 ALTER TABLE `order_master` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -54,4 +54,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-12 19:33:59
+-- Dump completed on 2025-12-13  5:58:11

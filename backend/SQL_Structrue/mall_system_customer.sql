@@ -29,10 +29,11 @@ CREATE TABLE `customer` (
   `email` varchar(100) DEFAULT NULL COMMENT '邮箱 (用于找回和发货确认)',
   `phone` varchar(20) DEFAULT NULL COMMENT '电话号码',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `is_admin` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否为管理员 (0: 普通用户, 1: 管理员)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商城顾客表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商城顾客表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +42,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'testuser01','password123','test_mail_01@yourdomain.com','13800000001','2025-12-11 09:18:52');
+INSERT INTO `customer` VALUES (1,'testuser01','password123','test_mail_01@yourdomain.com','13800000001','2025-12-11 09:18:52',0),(3,'testuser02','password123','test_mail_02@yourdomain.com','13800000011','2025-12-12 16:54:11',0),(4,'newuser','123456','newuser@test.com','13888888888','2025-12-12 17:01:22',0),(5,'testuser_complete','testpassword123','updated_testuser_complete@example.com','13800000002','2025-12-12 18:54:18',0),(6,'admin','adminVIP','admin@domain.com','10000000000','2025-12-12 19:22:55',1);
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -54,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-12 19:33:59
+-- Dump completed on 2025-12-13  5:58:10
