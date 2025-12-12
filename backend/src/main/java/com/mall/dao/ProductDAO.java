@@ -13,17 +13,43 @@ public class ProductDAO {
 
     // --- 1. 创建商品 (Create) ---
     public boolean createProduct(Product product) {
-        String sql = "INSERT INTO product (name, description, price, stock_quantity, image_url) VALUES (?, ?, ?, ?, ?)";
+        // 先查询是否存在相同名称的商品
+        String checkSql = "SELECT id, stock_quantity FROM product WHERE name = ? AND is_deleted = 0";
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
 
-            ps.setString(1, product.getName());
-            ps.setString(2, product.getDescription());
-            ps.setBigDecimal(3, product.getPrice());
-            ps.setInt(4, product.getStockQuantity());
-            ps.setString(5, product.getImageUrl());
+            checkPs.setString(1, product.getName());
+            try (ResultSet rs = checkPs.executeQuery()) {
+                if (rs.next()) {
+                    // 商品已存在，更新库存数量
+                    int existingId = rs.getInt("id");
+                    int existingStock = rs.getInt("stock_quantity");
+                    int newStock = existingStock + product.getStockQuantity();
 
-            return ps.executeUpdate() > 0;
+                    String updateSql = "UPDATE product SET stock_quantity = ?, description = ?, price = ?, image_url = ? WHERE id = ?";
+                    try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                        updatePs.setInt(1, newStock);
+                        updatePs.setString(2, product.getDescription());
+                        updatePs.setBigDecimal(3, product.getPrice());
+                        updatePs.setString(4, product.getImageUrl());
+                        updatePs.setInt(5, existingId);
+
+                        return updatePs.executeUpdate() > 0;
+                    }
+                } else {
+                    // 商品不存在，创建新商品
+                    String insertSql = "INSERT INTO product (name, description, price, stock_quantity, image_url) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
+                        insertPs.setString(1, product.getName());
+                        insertPs.setString(2, product.getDescription());
+                        insertPs.setBigDecimal(3, product.getPrice());
+                        insertPs.setInt(4, product.getStockQuantity());
+                        insertPs.setString(5, product.getImageUrl());
+
+                        return insertPs.executeUpdate() > 0;
+                    }
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

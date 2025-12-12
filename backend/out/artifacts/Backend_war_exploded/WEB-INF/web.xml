@@ -68,4 +68,13 @@
         <url-pattern>/customer/*</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>StatsServlet</servlet-name>
+        <servlet-class>com.mall.servlet.StatsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>StatsServlet</servlet-name>
+        <url-pattern>/stats/*</url-pattern>
+    </servlet-mapping>
+
 </web-app>

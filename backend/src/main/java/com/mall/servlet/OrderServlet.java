@@ -2,11 +2,11 @@ package com.mall.servlet;
 
 import com.google.gson.Gson;
 import com.mall.dao.CartDAO;
-import com.mall.dao.CustomerDAO; // ⭐ 补充导入 CustomerDAO
+import com.mall.dao.CustomerDAO;
 import com.mall.dao.OrderDAO;
 import com.mall.model.OrderMaster;
 import com.mall.model.OrderItem;
-import com.mall.util.EmailUtil; // ⭐ 补充导入 EmailUtil
+import com.mall.util.EmailUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,7 +26,7 @@ import java.util.Map;
 public class OrderServlet extends HttpServlet {
     private final OrderDAO orderDAO = new OrderDAO();
     private final CartDAO cartDAO = new CartDAO();
-    private final CustomerDAO customerDAO = new CustomerDAO(); // ⭐ 实例化 CustomerDAO
+    private final CustomerDAO customerDAO = new CustomerDAO();
     private final Gson gson = new Gson();
 
     // 辅助方法：发送 JSON 响应
@@ -38,12 +38,6 @@ public class OrderServlet extends HttpServlet {
     }
 
     // --- 创建订单 (POST /api/order) ---
-    // OrderServlet.java - doPost 方法 (最终完整修正版)
-
-    // OrderServlet.java - doPost 方法 (最终诊断版本)
-
-    // OrderServlet.java - doPost 方法 (最终追踪版本)
-
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -78,7 +72,6 @@ public class OrderServlet extends HttpServlet {
                     }
                 }
 
-
                 if (shippingAddress == null || cartItemIds.isEmpty()) {
                     sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, new HashMap<String, String>() {{ put("message", "收货地址和购物车项不能为空。"); }});
                     return;
@@ -88,7 +81,6 @@ public class OrderServlet extends HttpServlet {
                 System.out.println("[TRACE 3] 调用 CartDAO.getCartItemsByCustomerId...");
                 List<Map<String, Object>> cartItems = cartDAO.getCartItemsByCustomerId(customerId);
                 System.out.println("[TRACE 4] CartDAO 调用完成，返回 " + cartItems.size() + " 项. 开始处理数据...");
-
 
                 BigDecimal totalAmount = BigDecimal.ZERO;
                 List<OrderItem> orderItems = new ArrayList<>();
@@ -132,7 +124,6 @@ public class OrderServlet extends HttpServlet {
 
                 System.out.println("[TRACE 5] 购物车循环处理完成。待插入订单项数量: " + orderItems.size());
 
-
                 if (orderItems.isEmpty()) {
                     sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, new HashMap<String, String>() {{ put("message", "选中的购物车项无效或已过期。"); }});
                     return;
@@ -159,8 +150,11 @@ public class OrderServlet extends HttpServlet {
                 if (orderId > 0) {
                     result.put("success", true);
                     result.put("orderId", orderId);
-                    result.put("message", "订单创建成功（已隔离辅助功能）。");
+                    result.put("message", "订单创建成功。");
                     sendJsonResponse(response, HttpServletResponse.SC_CREATED, result); // 201 Created
+
+                    // 5. 发送订单确认邮件（使用单独线程，避免影响响应时间）
+                    sendOrderConfirmationEmail(customerId, orderId, totalAmount, shippingAddress, orderItems);
 
                 } else {
                     result.put("success", false);
@@ -243,5 +237,60 @@ public class OrderServlet extends HttpServlet {
             sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     new HashMap<String, String>() {{ put("message", "服务器内部错误：" + e.getMessage()); }});
         }
+    }
+
+    // 发送订单确认邮件
+    private void sendOrderConfirmationEmail(int customerId, int orderId, BigDecimal totalAmount, String shippingAddress, List<OrderItem> orderItems) {
+        new Thread(() -> {
+            try {
+                // 获取用户邮箱
+                String userEmail = customerDAO.getEmailById(customerId);
+                if (userEmail == null || userEmail.isEmpty()) {
+                    System.err.println("[ERROR] 无法获取用户邮箱，跳过邮件发送。");
+                    return;
+                }
+
+                // 构建邮件内容
+                StringBuilder emailContent = new StringBuilder();
+                emailContent.append("亲爱的顾客：\n\n");
+                emailContent.append("感谢您的订单！以下是您的订单详情：\n\n");
+                emailContent.append("订单号：").append(orderId).append("\n");
+                emailContent.append("总金额：￥").append(totalAmount).append("\n");
+                emailContent.append("收货地址：").append(shippingAddress).append("\n\n");
+                emailContent.append("订单商品：\n");
+                emailContent.append("----------------------------------------\n");
+                emailContent.append("商品名称\t\t数量\t单价\t小计\n");
+                emailContent.append("----------------------------------------\n");
+
+                for (OrderItem item : orderItems) {
+                    BigDecimal itemTotal = item.getPriceAtOrder().multiply(new BigDecimal(item.getQuantity()));
+                    emailContent.append(item.getProductName())
+                            .append("\t\t")
+                            .append(item.getQuantity())
+                            .append("\t")
+                            .append("￥")
+                            .append(item.getPriceAtOrder())
+                            .append("\t")
+                            .append("￥")
+                            .append(itemTotal)
+                            .append("\n");
+                }
+
+                emailContent.append("----------------------------------------\n");
+                emailContent.append("总计：￥").append(totalAmount).append("\n\n");
+                emailContent.append("我们将尽快为您处理订单。如有任何问题，请随时联系我们。\n\n");
+                emailContent.append("此致\n");
+                emailContent.append("商城团队\n");
+
+                // 发送邮件
+                String subject = "订单确认 - 订单号：" + orderId;
+                EmailUtil.sendEmail(userEmail, subject, emailContent.toString());
+                System.out.println("[INFO] 订单确认邮件已发送至：" + userEmail);
+
+            } catch (Exception e) {
+                System.err.println("[ERROR] 发送订单确认邮件失败：");
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

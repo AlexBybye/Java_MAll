@@ -1,12 +1,14 @@
 package com.mall.servlet;
 
 import com.google.gson.Gson;
+import com.mall.dao.CustomerDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -17,6 +19,8 @@ import java.util.Map;
 public class CustomerServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
+    // 将CustomerDAO声明为类成员变量
+    private final CustomerDAO customerDAO = new CustomerDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -51,6 +55,56 @@ public class CustomerServlet extends HttpServlet {
             put("username", username);
             put("info", "这是需要登录才能查看的个人资料。");
         }});
+
+        out.print(gson.toJson(result));
+        out.flush();
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+        Map<String, Object> result = new HashMap<>();
+
+        // 1. 从AuthFilter获取用户ID
+        String userIdStr = (String) request.getAttribute("userId");
+        if (userIdStr == null) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            result.put("success", false);
+            result.put("message", "认证信息缺失，请登录。");
+            out.print(gson.toJson(result));
+            return;
+        }
+
+        int userId = Integer.parseInt(userIdStr);
+
+        // 2. 读取请求体中的更新数据
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader = request.getReader();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line);
+        }
+
+        Map<String, Object> updateData = gson.fromJson(sb.toString(), Map.class);
+        String email = (String) updateData.get("email");
+        String phone = (String) updateData.get("phone");
+
+        // 3. 直接使用类成员变量customerDAO，无需每次创建新实例
+        boolean success = customerDAO.updateCustomerProfile(userId, email, phone);
+
+        // 4. 返回响应
+        if (success) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            result.put("success", true);
+            result.put("message", "用户资料更新成功。");
+        } else {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            result.put("success", false);
+            result.put("message", "用户资料更新失败。");
+        }
 
         out.print(gson.toJson(result));
         out.flush();

@@ -68,6 +68,28 @@ public class CustomerDAO {
         }
     }
 
+    /**
+     * 更新用户资料
+     */
+    public boolean updateCustomerProfile(int customerId, String email, String phone) {
+        String sql = "UPDATE customer SET email = ?, phone = ? WHERE id = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ps.setString(2, phone);
+            ps.setInt(3, customerId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public Customer loginCustomer(String username, String password) {
         // 实际项目中，password 应该是加密后的哈希值进行比对
         String sql = "SELECT id, username, password, email, phone FROM customer WHERE username = ?";

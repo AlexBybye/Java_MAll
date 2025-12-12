@@ -55,8 +55,10 @@ public class AuthFilter implements Filter {
 
 // 放行登录/注册
 // ⭐ 修正后的放行逻辑
-        if (requestPath.endsWith("/login") || requestPath.endsWith("/register")) {
-            System.out.println("--- AuthFilter 放行（登录/注册）: " + requestPath);
+        // 在AuthFilter的doFilter方法中，放行登录/注册后，添加对产品GET请求的放行
+        if (requestPath.endsWith("/login") || requestPath.endsWith("/register") ||
+                (requestPath.startsWith("/product") && "GET".equalsIgnoreCase(req.getMethod()))) {
+            System.out.println("--- AuthFilter 放行请求: " + requestPath);
             chain.doFilter(request, response);
             return;
         }
