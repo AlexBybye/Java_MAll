@@ -1,0 +1,96 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+### 1. 定义环境变量 (Authorization Header 将在登录后手动修改)
+@baseUrl = http://localhost:8080/api
+@username = testuser01
+@password = password123
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiMSIsInVzZXJuYW1lIjoidGVzdHVzZXIwMSIsImlhdCI6MTc2NTUzODgzOCwiZXhwIjoxNzY1NTQyNDM4fQ.kZ3H9moJATyEp9oUAyisfljZfVwAZJJJJ7W-mCMcIlQ
+### A. 注册新用户 (RegisterServlet)
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+    "username": "{{username}}",
+    "password": "{{password}}",
+    "email": "test_mail_01@yourdomain.com",
+    "phone": "13800000001"
+}
+
+### B. 登录并获取 Token (LoginServlet)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+    "username": "{{username}}",
+    "password": "{{password}}"
+}
+
+### C. 创建测试商品 (ProductServlet - POST)
+# 确保这是 ID=1 的商品，库存充足
+POST {{baseUrl}}/product
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "测试商品A - 订单核心测试",
+  "description": "用于验证库存和订单事务",
+  "price": 50.00,
+  "stockQuantity": 50,
+  "imageUrl": "http://example.com/imageA.jpg"
+}
+
+### D. 添加商品到购物车 (CartServlet - POST)
+
+POST {{baseUrl}}/cart
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### D-2. 验证购物车内容 (获取 cart_id)
+# 运行此请求，确认 cart_id (通常是 1)
+GET {{baseUrl}}/cart
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### E. 核心测试：创建订单 (OrderServlet - POST)
+# 运行此请求后，检查：
+# 1. 数据库：product.stock_quantity (应减少 2)
+# 2. 数据库：cart 表 (应删除此购物车项)
+# 3. 邮箱：检查订单确认邮件
+POST {{baseUrl}}/order
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "shippingAddress": "北京市海淀区中关村测试点",
+  "cartItemIds": [9]
+}
+
+### F. 访问受保护接口 (AuthFilter 测试)
+# 验证 JWT 过滤器是否工作
+GET {{baseUrl}}/customer/profile
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### F-2. 访问受保护接口 (无 Token，预期失败 401/403)
+GET {{baseUrl}}/customer/profile
+Content-Type: application/json
+### G-1. 验证：获取订单列表 (OrderServlet - GET 列表)
+# 验证 OrderServlet 的 doGet 列表逻辑和 OrderDAO.getOrdersByCustomerId
+GET {{baseUrl}}/order
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+### G-2. 验证：获取订单详情 (OrderServlet - GET 详情)
+# 验证 OrderServlet 的 doGet 详情逻辑和 OrderDAO.getOrderById
+# **注意：请替换 123 为你在 E 步骤中创建的实际 orderId**
+GET {{baseUrl}}/order/4
+Content-Type: application/json
+Authorization: Bearer {{token}}
