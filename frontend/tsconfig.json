@@ -1,0 +1,19 @@
+// D:\JavaMall\frontend\tsconfig.json
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],
+  
+  // ⭐ 关键修正: 添加 compilerOptions 块来满足 WebHint 的要求
+  "compilerOptions": {
+    "strict": true,
+    // 增加文件大小写一致性检查，这也是一个常见的WebHint建议
+    "forceConsistentCasingInFileNames": true 
+  }
+}

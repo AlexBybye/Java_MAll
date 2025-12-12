@@ -3,9 +3,9 @@ GET https://examples.http-client.intellij.net/get
     ?generated-in=IntelliJ IDEA
 ### 1. 定义环境变量 (Authorization Header 将在登录后手动修改)
 @baseUrl = http://localhost:8080/api
-@username = testuser01
+@username = testuser02
 @password = password123
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiMSIsInVzZXJuYW1lIjoidGVzdHVzZXIwMSIsImlhdCI6MTc2NTUzODgzOCwiZXhwIjoxNzY1NTQyNDM4fQ.kZ3H9moJATyEp9oUAyisfljZfVwAZJJJJ7W-mCMcIlQ
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiMyIsInVzZXJuYW1lIjoidGVzdHVzZXIwMiIsImlhdCI6MTc2NTU2MjQyOSwiZXhwIjoxNzY1NTY2MDI5fQ.foXQdVjknjfh-p4_oPMHalYtK4cYyvtWNeQ9tyK_uVg
 ### A. 注册新用户 (RegisterServlet)
 POST {{baseUrl}}/register
 Content-Type: application/json
@@ -13,8 +13,8 @@ Content-Type: application/json
 {
     "username": "{{username}}",
     "password": "{{password}}",
-    "email": "test_mail_01@yourdomain.com",
-    "phone": "13800000001"
+    "email": "test_mail_02@yourdomain.com",
+    "phone": "13800000011"
 }
 
 ### B. 登录并获取 Token (LoginServlet)

@@ -53,16 +53,15 @@ public class LoginServlet extends HttpServlet {
                 // 3. 验证成功：生成 JWT Token
                 String token = JWTUtil.generateToken(loggedInCustomer.getId(), loggedInCustomer.getUsername());
 
-                // 4. 构建成功响应
+                // 4. 构建成功响应 (修正为平铺结构)
                 result.put("success", true);
                 result.put("message", "登录成功！");
                 result.put("token", token); // 返回给前端，前端需保存并在后续请求中携带
-                // 返回部分用户信息 (不含密码)
-                result.put("user", new HashMap<String, Object>(){{
-                    put("id", loggedInCustomer.getId());
-                    put("username", loggedInCustomer.getUsername());
-                    put("email", loggedInCustomer.getEmail());
-                }});
+
+                // ⭐ 关键修正点：将 userId 和 username 平铺到顶层
+                result.put("userId", loggedInCustomer.getId());
+                result.put("username", loggedInCustomer.getUsername());
+                // 如果需要 email，可以保留：result.put("email", loggedInCustomer.getEmail());
 
             } else {
                 // 5. 验证失败
@@ -74,6 +73,7 @@ public class LoginServlet extends HttpServlet {
             e.printStackTrace();
             result.put("success", false);
             result.put("message", "服务器内部错误：" + e.getMessage());
+            // ⭐ 修正点：移除对 loggedInCustomer 的错误引用
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
 

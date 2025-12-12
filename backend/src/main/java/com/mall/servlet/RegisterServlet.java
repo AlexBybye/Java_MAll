@@ -44,9 +44,11 @@ public class RegisterServlet extends HttpServlet {
             // 3. 使用 Gson 将 JSON 字符串反序列化为 Customer 对象
             Customer customer = gson.fromJson(reader, Customer.class);
 
-            if (customer == null || customer.getUsername() == null || customer.getPassword() == null) {
+            if (customer == null || customer.getUsername() == null || customer.getPassword() == null ||
+                    customer.getPhone() == null ||
+                    customer.getEmail() == null) {
                 result.put("success", false);
-                result.put("message", "用户名和密码不能为空。");
+                result.put("message", "用户名、密码、邮箱、手机号不能为空。");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400 错误
                 out.print(gson.toJson(result));
                 return;

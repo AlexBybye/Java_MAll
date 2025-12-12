@@ -30,15 +30,33 @@ public class AuthFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
 
+        // ⭐ 1. 【新增】处理 CORS 预检请求 (OPTIONS) 和设置 CORS 头部
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); // 允许你的前端地址
+        resp.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // 允许 JWT Token 头部
+        resp.setHeader("Access-Control-Allow-Credentials", "true"); // 允许携带 Cookie/Session
+
+        // 如果请求是 OPTIONS，这说明是预检请求，直接返回 200/204 状态码，不进入过滤器链。
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            resp.setStatus(HttpServletResponse.SC_OK); // 返回 200 OK
+            System.out.println("--- AuthFilter 拦截并处理 OPTIONS 预检请求 ---");
+            return; // 结束处理，不继续执行 Filter Chain
+        }
+
         // 1. 设置响应格式
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
-        String requestURI = req.getRequestURI();
-        System.out.println("--- AuthFilter 拦截请求: " + requestURI);
+// ⭐ 修正路径获取方式：使用 getServletPath() 更精确地匹配
+        String requestPath = req.getServletPath();
+// 如果你的项目没有配置 Servlet Path，也可以继续使用 requestURI，但我们用更精确的。
 
-        // 放行登录/注册
-        if (requestURI.endsWith("/login") || requestURI.endsWith("/register")) {
+        System.out.println("--- AuthFilter 拦截请求: " + requestPath);
+
+// 放行登录/注册
+// ⭐ 修正后的放行逻辑
+        if (requestPath.endsWith("/login") || requestPath.endsWith("/register")) {
+            System.out.println("--- AuthFilter 放行（登录/注册）: " + requestPath);
             chain.doFilter(request, response);
             return;
         }
