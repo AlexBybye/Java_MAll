@@ -3,7 +3,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import api from '@/utils/http';
+import { api } from '@/services/api'; // 使用正确的API导入方式
 import type { OrderMaster, OrderItem } from '@/types';
 
 const router = useRouter();
@@ -37,15 +37,14 @@ onMounted(() => {
   }
   loadOrderDetail();
 });
-
 // 加载订单详情
 async function loadOrderDetail() {
   try {
     isLoading.value = true;
-    const response = await api.get(`/order/${orderId}`);
-    if (response.data.success) {
+    const response = await api.getOrderDetail(orderId); // 使用统一API方法
+    if (response.success) { // 直接访问response.success
       // 将后端返回的订单数据赋值给order对象
-      Object.assign(order, response.data.data);
+      Object.assign(order, response.order); // 正确获取response.order
     }
   } catch (error: any) {
     errorMessage.value = '加载订单详情失败: ' + (error.response?.data?.message || error.message);
@@ -66,7 +65,9 @@ function getStatusLabel(status: string): string {
     PENDING: '待处理',
     PAID: '已支付',
     SHIPPED: '已发货',
-    DELIVERED: '已送达'
+    DELIVERED: '已送达',
+    CANCELLED: '已取消',
+    CONFIRMED: '已确认'
   };
   return statusMap[status] || status;
 }

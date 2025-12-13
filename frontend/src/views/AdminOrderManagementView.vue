@@ -39,7 +39,11 @@ async function loadOrders() {
     isLoading.value = true;
     const response = await api.getAllOrders();
     if (response.success) {
-      orders.value = response.orders;
+      // 修复：将后端返回的orderStatus字段映射为status字段
+      orders.value = response.orders.map((order:any) => ({
+        ...order,
+        status: order.orderStatus
+      }));
     }
   } catch (error) {
     console.error('加载订单列表失败:', error);
@@ -48,11 +52,10 @@ async function loadOrders() {
   }
 }
 
-// 更新订单状态
 async function updateOrderStatus(orderId: number, newStatus: string) {
   try {
     const response = await api.updateOrderStatus(orderId, newStatus);
-    if (response.success) {
+    if (response.success) { // 直接访问response.success
       // 重新加载订单列表
       loadOrders();
     }

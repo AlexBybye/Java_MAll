@@ -1,0 +1,14 @@
+# 使用 Tomcat 作为后端服务器
+FROM tomcat:10.1-jdk17
+
+# 清除默认的 webapps 目录
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+# 复制构建好的 WAR 目录到 Tomcat
+COPY out/artifacts/Backend_war_exploded/ /usr/local/tomcat/webapps/ROOT/
+
+# 暴露 8080 端口
+EXPOSE 8080
+
+# 启动 Tomcat
+CMD ["catalina.sh", "run"]

@@ -9,7 +9,7 @@
 @adminPassword = adminVIP
 @adminPhone = 10000000000
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNSIsInVzZXJuYW1lIjoidGVzdHVzZXJfY29tcGxldGUiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzY1NTY5ODA0LCJleHAiOjE3NjU1NzM0MDR9.hOm4lo14pMDYPv8HHjcLPka77aPJxd4le09vqUqKcCA
-@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNiIsInVzZXJuYW1lIjoiYWRtaW4iLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NjU2NDY4OTIsImV4cCI6MTc2NTY1MDQ5Mn0.sJZqqO2UmwGWH7c5MCc061svkAFJzl16RLUp7UC5z6M
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNYWxsU3lzdGVtIiwic3ViIjoiNiIsInVzZXJuYW1lIjoiYWRtaW4iLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NjU2NTA1MzAsImV4cCI6MTc2NTY1NDEzMH0.iOzVZz5lsJ65lHU-UApjtZwhzNBmLreKdkjFu5mZyRQ
 ### 1. 顾客管理模块 (Customer Management)
 ### ===============================================================================
 
@@ -235,7 +235,7 @@ Content-Type: application/json
 Authorization: Bearer {{adminToken}}
 
 ### 5.7 获取销售统计 - 订单状态统计 (StatsServlet)
-GET {{baseUrl}}/stats/order-status
+GET {{baseUrl}}/stats/status
 Content-Type: application/json
 Authorization: Bearer {{adminToken}}
 

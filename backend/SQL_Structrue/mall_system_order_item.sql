@@ -34,7 +34,7 @@ CREATE TABLE `order_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `order_item_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `order_master` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单详情表';
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单详情表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,7 +43,7 @@ CREATE TABLE `order_item` (
 
 LOCK TABLES `order_item` WRITE;
 /*!40000 ALTER TABLE `order_item` DISABLE KEYS */;
-INSERT INTO `order_item` VALUES (2,3,1,'测试商品A - 订单核心测试',8,50.00),(3,4,1,'测试商品A - 订单核心测试',2,50.00),(4,5,1,'测试商品A - 订单核心测试',4,50.00),(5,6,1,'测试商品A - 订单核心测试',2,50.00);
+INSERT INTO `order_item` VALUES (2,3,1,'测试商品A - 订单核心测试',8,50.00),(3,4,1,'测试商品A - 订单核心测试',2,50.00),(4,5,1,'测试商品A - 订单核心测试',4,50.00),(5,6,1,'测试商品A - 订单核心测试',2,50.00),(6,7,23,'手表',2,900.00),(7,8,23,'手表',2,900.00),(8,8,24,'华工计算机天王的三角洲账号',1,4000.00),(9,9,23,'手表',1,900.00),(10,10,23,'手表',1,900.00),(11,11,20,'测试产品 - 手机',3,3999.00),(12,11,23,'手表',1,900.00),(13,12,22,'毕盛',1,1000000.00);
 /*!40000 ALTER TABLE `order_item` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -56,4 +56,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-13  5:58:11
+-- Dump completed on 2025-12-14  2:43:24

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mall-network
+
+  # 后端服务
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    environment:
+      - DB_URL=jdbc:mysql://mysql:3306/mall_system?useSSL=false&serverTimezone=UTC
+      - DB_USER=root
+      - DB_PASSWORD=Mimashi1
+    networks:
+      - mall-network
+
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mimashi1
+      - MYSQL_DATABASE=mall_system
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/SQL_Structrue/:/docker-entrypoint-initdb.d/
+    networks:
+      - mall-network
+
+volumes:
+  mysql-data:
+
+networks:
+  mall-network:
+    driver: bridge

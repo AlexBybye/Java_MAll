@@ -62,27 +62,33 @@ public class StatsServlet extends HttpServlet {
             if (pathInfo == null || pathInfo.equals("/")) {
                 // GET /api/stats - 返回所有统计数据
                 Map<String, Object> allStats = new HashMap<>();
-
+                
+                // 添加统计概览数据
+                Map<String, Object> statsOverview = statsDAO.getStatsOverview();
+                System.out.println("返回的统计概览数据:" + statsOverview); // 添加日志
+                allStats.put("statsOverview", statsOverview);
+                
                 // 默认获取最近30天的每日销售数据
                 String endDate = java.time.LocalDate.now().toString();
                 String startDate = java.time.LocalDate.now().minusDays(29).toString();
                 allStats.put("dailySales", statsDAO.getDailySales(startDate, endDate));
-
+                
                 // 获取当前年份的月度销售数据
                 String currentYear = String.valueOf(java.time.Year.now().getValue());
                 allStats.put("monthlySales", statsDAO.getMonthlySales(currentYear));
-
+                
                 // 获取前10名热销商品
                 allStats.put("topSellingProducts", statsDAO.getTopSellingProducts(10));
-
+                
                 // 获取订单状态统计
                 allStats.put("orderStatusStats", statsDAO.getOrderStatusStats());
 
                 result.put("success", true);
                 result.put("data", allStats);
                 sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+            }
 
-            } else {
+            else {
                 // GET /api/stats/{type} - 返回特定类型的统计数据
                 String[] pathParts = pathInfo.split("/");
                 if (pathParts.length == 2 && !pathParts[1].isEmpty()) {

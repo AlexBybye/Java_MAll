@@ -32,7 +32,7 @@ CREATE TABLE `order_master` (
   PRIMARY KEY (`order_id`),
   KEY `customer_id` (`customer_id`),
   CONSTRAINT `order_master_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单主表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,7 @@ CREATE TABLE `order_master` (
 
 LOCK TABLES `order_master` WRITE;
 /*!40000 ALTER TABLE `order_master` DISABLE KEYS */;
-INSERT INTO `order_master` VALUES (3,1,'2025-12-12 20:14:20',400.00,'北京市海淀区中关村测试点','SHIPPED'),(4,1,'2025-12-12 20:18:36',100.00,'北京市海淀区中关村测试点','PENDING'),(5,5,'2025-12-13 04:02:36',200.00,'北京市海淀区中关村大街1号','PENDING'),(6,5,'2025-12-13 04:31:31',100.00,'北京市海淀区中关村大街1号','PENDING');
+INSERT INTO `order_master` VALUES (3,1,'2025-12-12 20:14:20',400.00,'北京市海淀区中关村测试点','shipped'),(4,1,'2025-12-12 20:18:36',100.00,'北京市海淀区中关村测试点','confirmed'),(5,5,'2025-12-13 04:02:36',200.00,'北京市海淀区中关村大街1号','cancelled'),(6,5,'2025-12-13 04:31:31',100.00,'北京市海淀区中关村大街1号','confirmed'),(7,4,'2025-12-14 00:29:12',1800.00,'广东省广州市番禺区小谷围街道外环东路382号','delivered'),(8,4,'2025-12-14 00:41:58',5800.00,'辽宁省盘锦市兴隆台区振兴街道香稻路？号','pending'),(9,4,'2025-12-14 01:20:51',900.00,'河北省秦皇岛市东北大学秦皇岛分校','delivered'),(10,4,'2025-12-14 01:22:19',900.00,'广东省广州市番禺区小谷围街道外环东路382号','shipped'),(11,4,'2025-12-14 01:33:31',12897.00,'广东省广州市番禺区小谷围街道外环东路382号','confirmed'),(12,4,'2025-12-14 01:53:00',1000000.00,'1','delivered');
 /*!40000 ALTER TABLE `order_master` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -54,4 +54,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-13  5:58:11
+-- Dump completed on 2025-12-14  2:43:23
