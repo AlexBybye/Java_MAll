@@ -48,20 +48,22 @@ public class CustomerDAO {
     /**
      * 注册新顾客
      */
+    // 修改registerCustomer方法，添加is_admin字段
     public boolean registerCustomer(Customer customer) {
-        String sql = "INSERT INTO customer (username, password, email, phone) VALUES (?, ?, ?, ?)";
-
+        String sql = "INSERT INTO customer (username, password, email, phone, is_admin) VALUES (?, ?, ?, ?, ?)";
+    
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
+    
             ps.setString(1, customer.getUsername());
             ps.setString(2, customer.getPassword());
             ps.setString(3, customer.getEmail());
             ps.setString(4, customer.getPhone());
-
+            ps.setBoolean(5, customer.isAdmin()); // 添加is_admin字段
+    
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
-
+    
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -122,4 +124,3 @@ public class CustomerDAO {
     }
 
 }
-

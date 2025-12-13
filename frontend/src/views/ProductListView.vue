@@ -1,48 +1,74 @@
+<!-- frontend\src\views\ProductListView.vue -->
 <template>
   <div class="product-list-container">
-    <div class="header">
-      <h1>商品列表</h1>
+    <div class="page-header">
+      <h1 class="page-title">商品列表</h1>
       <router-link to="/cart" class="cart-link">
+        <i class="cart-icon">🛒</i>
         购物车 ({{ cartStore.totalItems }})
       </router-link>
-      <div v-if="isLoading">加载中...</div>
-      <div v-else-if="error" class="error-message">{{ error }}</div>
+    </div>
 
-      <div v-else class="products-grid">
+    <!-- 加载状态 -->
+    <div v-if="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>正在加载商品...</p>
+    </div>
+
+    <!-- 错误信息 -->
+    <div v-else-if="error" class="error-container">
+      <i class="error-icon">⚠️</i>
+      <p class="error-message">{{ error }}</p>
+      <button class="retry-btn" @click="fetchProducts">重新加载</button>
+    </div>
+
+    <!-- 商品列表容器 -->
+    <div v-else class="products-container">
+      <!-- 有商品时显示商品列表 -->
+      <div v-if="products.length > 0" class="products-grid">
         <div v-for="product in products" :key="product.id" class="product-card">
-          <h3>{{ product.name }}</h3>
-          <p class="price">¥{{ product.price.toFixed(2) }}</p>
-          <p class="stock">库存: {{ product.stockQuantity }}</p>
-          <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0">
-            {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }} </button>
+          <!-- 商品图片 -->
+          <div class="product-image-container">
+            <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-image"
+              loading="lazy" @error="handleImageError($event)" />
+            <div v-else class="no-image">
+              <i class="image-placeholder">📷</i>
+              <span>暂无图片</span>
+            </div>
+          </div>
+
+          <!-- 商品信息 -->
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+
+            <!-- 商品URL -->
+            <div v-if="product.imageUrl" class="product-url">
+              <a :href="product.imageUrl" target="_blank" rel="noopener noreferrer" class="url-link">
+                <i class="url-icon">🔗</i>
+                查看图片
+              </a>
+            </div>
+
+            <div class="product-meta">
+              <span class="product-price">¥{{ product.price.toFixed(2) }}</span>
+              <span class="product-stock" :class="{ 'out-of-stock': product.stockQuantity <= 0 }">
+                {{ product.stockQuantity <= 0 ? '已售罄' : `库存: ${product.stockQuantity}` }} </span>
+            </div>
+
+            <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0">
+              {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }} </button>
+          </div>
         </div>
+      </div>
+
+      <!-- 空状态：当没有商品时显示 -->
+      <div v-else class="empty-state">
+        <i class="empty-icon">📦</i>
+        <p>暂无商品</p>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* 现有的样式 */
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.cart-link {
-  padding: 10px 15px;
-  background-color: #4CAF50;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.cart-link:hover {
-  background-color: #45a049;
-}
-</style>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
@@ -71,9 +97,14 @@ async function fetchProducts() {
     // 调用 API: 获取所有商品列表
     const response = await api.get<ApiResponse>('/product');
 
+    // 添加调试信息，查看API返回的完整数据
+    console.log('API响应数据：', response.data);
+
     // 检查响应是否成功
     if (response.data.success) {
       products.value = response.data.data;
+      // 查看商品列表数据
+      console.log('商品列表数据：', products.value);
     } else {
       throw new Error(response.data.message || '获取商品列表失败');
     }
@@ -89,10 +120,38 @@ async function fetchProducts() {
 async function addToCart(productId: number) {
   try {
     await cartStore.addToCart(productId, 1);
-    alert('商品已成功添加到购物车！');
+    // 使用更友好的提示方式
+    showNotification('商品已成功添加到购物车！', 'success');
   } catch (err: any) {
-    alert('添加商品到购物车失败：' + (err.message || '未知错误'));
+    showNotification('添加商品到购物车失败：' + (err.message || '未知错误'), 'error');
   }
+}
+
+// 图片加载错误处理
+function handleImageError(event: Event) {
+  const imgElement = event.target as HTMLImageElement;
+  imgElement.style.display = 'none';
+  // 可以在这里添加备用图片
+}
+
+// 简单的通知函数
+function showNotification(message: string, type: 'success' | 'error') {
+  // 创建通知元素
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // 添加到页面
+  document.body.appendChild(notification);
+
+  // 动画效果
+  setTimeout(() => notification.classList.add('show'), 10);
+
+  // 自动移除
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => document.body.removeChild(notification), 300);
+  }, 3000);
 }
 
 onMounted(() => {
@@ -101,60 +160,363 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* (可选) 基础样式，你可以根据需要调整 */
+/* 全局样式 */
 .product-list-container {
-  padding: 20px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 2rem;
 }
 
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+/* 页面头部 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
 }
 
-.product-card {
-  border: 1px solid #ddd;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  text-align: center;
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.cart-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.cart-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.cart-icon {
+  font-size: 1.2rem;
+}
+
+/* 加载状态 */
+.loading-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
 }
 
-.price {
-  color: #e60000;
-  font-weight: bold;
-  font-size: 1.2em;
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 错误信息 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: #fff5f5;
+  border-radius: 12px;
+  border: 1px solid #ffebee;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
 .error-message {
-  color: red;
-  padding: 10px;
-  border: 1px solid red;
-  background-color: #ffebeb;
+  color: #c62828;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
 }
 
-.add-to-cart-btn {
-  background-color: #4CAF50;
+.retry-btn {
+  background-color: #667eea;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background-color: #5568d3;
+  transform: translateY(-1px);
+}
+
+/* 商品网格 */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+/* 商品卡片 */
+.product-card {
+  background-color: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* 商品图片 */
+.product-image-container {
+  width: 100%;
+  height: 200px;
+  background-color: #f8f9fa;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.image-placeholder {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 商品信息 */
+.product-info {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.product-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 商品URL */
+.product-url {
+  margin-top: -0.5rem;
+}
+
+.url-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+}
+
+.url-link:hover {
+  color: #5568d3;
+  text-decoration: underline;
+}
+
+.url-icon {
+  font-size: 0.8rem;
+}
+
+/* 商品元信息 */
+.product-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: auto;
 }
 
-.add-to-cart-btn:hover {
-  background-color: #45a049;
+.product-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e63946;
+}
+
+.product-stock {
+  font-size: 0.875rem;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.product-stock.out-of-stock {
+  color: #f44336;
+}
+
+/* 添加到购物车按钮 */
+.add-to-cart-btn {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.add-to-cart-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .add-to-cart-btn:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: #bdbdbd;
+}
+
+.empty-state p {
+  color: #757575;
+  font-size: 1.2rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .product-list-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .product-info {
+    padding: 1rem;
+  }
+
+  .product-price {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-image-container {
+    height: 180px;
+  }
+}
+
+/* 通知样式 */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.success {
+  background-color: #4caf50;
+}
+
+.notification.error {
+  background-color: #f44336;
+}
+
+.notification.show {
+  transform: translateX(0);
 }
 </style>

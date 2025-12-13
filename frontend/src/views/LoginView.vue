@@ -1,21 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '@/utils/http'; // 引入封装好的 api
-import { useAuthStore } from '@/stores/auth'; // 引入认证 Store
-// 只需要 AuthResponse 类型，因为后端现在返回的就是这个平铺结构
-import type { AuthResponse } from '@/types'; 
+import api from '@/utils/http';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 绑定表单数据
 const username = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
 
-// 登录处理函数
 async function handleLogin() {
     errorMessage.value = '';
     if (!username.value || !password.value) {
@@ -25,20 +21,32 @@ async function handleLogin() {
 
     isLoading.value = true;
     try {
-        // 调用后端登录 API，现在我们期望它返回 AuthResponse (平铺结构)
-        const response = await api.post<AuthResponse>('/login', {
+        const response = await api.post('/login', {
             username: username.value,
             password: password.value
         });
-        
+
         // 成功处理
         if (response.data.token) {
-            // ⭐ 核心修正：后端返回结构正确，直接将数据传递给 Pinia Store
-            authStore.login(response.data);
+            // 处理不同的后端响应格式
+            const loginData = {
+                token: response.data.token,
+                userId: response.data.userId || response.data.user?.id || null,
+                username: response.data.username || response.data.user?.username || null,
+                isAdmin: response.data.isAdmin || response.data.user?.userType === 'admin' || false
+            };
 
-            // 2. 检查是否有重定向参数，否则跳转到首页
-            const redirectPath = router.currentRoute.value.query.redirect as string | undefined;
-            router.push(redirectPath || { path: '/' });
+            authStore.login(loginData);
+
+            // 根据isAdmin字段决定跳转路由
+            if (loginData.isAdmin) {
+                // 管理员跳转到管理页面
+                router.push({ name: 'admin-dashboard' });
+            } else {
+                // 普通用户跳转到首页
+                const redirectPath = router.currentRoute.value.query.redirect as string | undefined;
+                router.push(redirectPath || { name: 'home' });
+            }
         } else {
             // 如果后端返回 200 但没有 token (通常不会发生，以防万一)
             errorMessage.value = '登录失败，请检查凭证。';
@@ -78,6 +86,11 @@ async function handleLogin() {
             <button type="submit" :disabled="isLoading">
                 {{ isLoading ? '登录中...' : '登录' }}
             </button>
+
+            <!-- 添加注册链接 -->
+            <div class="register-link">
+                没有账号？<router-link :to="{ name: 'register' }">去注册</router-link>
+            </div>
         </form>
     </div>
 </template>
@@ -119,6 +132,8 @@ button {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    margin-bottom: 15px;
+    /* 添加底部外边距 */
 }
 
 button:disabled {
@@ -133,5 +148,19 @@ button:disabled {
     padding: 10px;
     background-color: #ffebeb;
     border-radius: 4px;
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.register-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
 }
 </style>

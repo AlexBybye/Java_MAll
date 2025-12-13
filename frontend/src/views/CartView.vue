@@ -1,15 +1,16 @@
+<!-- frontend\src\views\CartView.vue -->
 <template>
   <div class="cart-container">
     <h1>我的购物车</h1>
-    
+
     <div v-if="cartStore.isLoading">加载中...</div>
     <div v-else-if="cartStore.error" class="error-message">{{ cartStore.error }}</div>
-    
+
     <div v-else-if="cartStore.cartItems.length === 0" class="empty-cart">
       <p>购物车是空的</p>
       <router-link to="/" class="continue-shopping">继续购物</router-link>
     </div>
-    
+
     <div v-else class="cart-content">
       <div class="cart-items">
         <div v-for="item in cartStore.cartItems" :key="item.cart_id" class="cart-item">
@@ -17,35 +18,29 @@
             <h3>{{ item.name }}</h3>
             <p class="price">¥{{ item.price.toFixed(2) }}</p>
           </div>
-          
+
           <div class="item-quantity">
-            <button 
-              class="quantity-btn" 
-              @click="updateQuantity(item.cart_id, item.quantity - 1)"
-              :disabled="item.quantity <= 1"
-            >
+            <button class="quantity-btn" @click="updateQuantity(item.cart_id, item.quantity - 1)"
+              :disabled="item.quantity <= 1">
               -
             </button>
             <span class="quantity">{{ item.quantity }}</span>
-            <button 
-              class="quantity-btn" 
-              @click="updateQuantity(item.cart_id, item.quantity + 1)"
-              :disabled="item.quantity >= item.stock_quantity"
-            >
+            <button class="quantity-btn" @click="updateQuantity(item.cart_id, item.quantity + 1)"
+              :disabled="item.quantity >= item.stock_quantity">
               +
             </button>
           </div>
-          
+
           <div class="item-total">
             ¥{{ (item.price * item.quantity).toFixed(2) }}
           </div>
-          
+
           <button class="remove-btn" @click="removeItem(item.cart_id)">
             删除
           </button>
         </div>
       </div>
-      
+
       <div class="cart-summary">
         <h2>购物车总计</h2>
         <div class="summary-row">
@@ -56,7 +51,7 @@
           <span>总计:</span>
           <span>¥{{ cartStore.totalPrice.toFixed(2) }}</span>
         </div>
-        <button class="checkout-btn">结算</button>
+        <button class="checkout-btn" @click="checkout">结算</button>
       </div>
     </div>
   </div>
@@ -84,6 +79,20 @@ async function updateQuantity(cartId: number, quantity: number) {
 async function removeItem(cartId: number) {
   if (confirm('确定要从购物车中删除这个商品吗？')) {
     await cartStore.removeCartItem(cartId);
+  }
+}
+
+// 结算功能
+async function checkout() {
+  try {
+    // 这里需要实现结算逻辑，例如跳转到订单确认页面
+    // 或者直接创建订单
+    alert('结算功能开发中');
+    // 示例：
+    // const cartItemIds = cartStore.cartItems.map(item => item.cart_id);
+    // await api.post('/order', { shippingAddress: '默认地址', cartItemIds });
+  } catch (error) {
+    console.error('结算失败:', error);
   }
 }
 </script>

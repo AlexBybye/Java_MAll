@@ -28,8 +28,8 @@ public class CartServlet extends HttpServlet {
         response.getWriter().write(gson.toJson(data));
     }
 
-    // --- 获取购物车内容 (GET /api/cart) ---
-    // 路径：/api/cart
+    // --- 获取购物车内容 (GET /cart) ---
+    // 路径：/cart
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException {

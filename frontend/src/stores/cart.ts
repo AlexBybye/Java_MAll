@@ -25,7 +25,7 @@ export const useCartStore = defineStore('cart', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await api.get('/api/cart');
+      const response = await api.get('/cart');  // 移除重复的/api前缀
       if (response.data.success) {
         cartItems.value = response.data.data;
       } else {
@@ -44,7 +44,7 @@ export const useCartStore = defineStore('cart', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await api.post('/api/cart', { productId, quantity });
+      const response = await api.post('/cart', { productId, quantity });  // 移除重复的/api前缀
       if (response.data.success) {
         // 重新获取购物车内容以保持同步
         await fetchCartItems();
@@ -66,7 +66,7 @@ export const useCartStore = defineStore('cart', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await api.put(`/api/cart/${cartId}`, { quantity });
+      const response = await api.put(`/cart/${cartId}`, { quantity });  // 移除重复的/api前缀
       if (response.data.success) {
         // 重新获取购物车内容以保持同步
         await fetchCartItems();
@@ -88,7 +88,7 @@ export const useCartStore = defineStore('cart', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await api.delete(`/api/cart/${cartId}`);
+      const response = await api.delete(`/cart/${cartId}`);  // 移除重复的/api前缀
       if (response.data.success) {
         // 重新获取购物车内容以保持同步
         await fetchCartItems();

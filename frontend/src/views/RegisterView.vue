@@ -1,14 +1,16 @@
+<!-- frontend\src\views\RegisterView.vue -->
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '@/utils/http'; // 引入封装好的 api
+import api from '@/utils/http';
 
 const router = useRouter();
 
-const username = ref('newuser'); // 建议使用
-const password = ref('123456');  // 建议使用
+const username = ref('newuser');
+const password = ref('123456');
 const email = ref('newuser@test.com');
 const phone = ref('13888888888');
+const isAdmin = ref(false);
 const message = ref('');
 const isLoading = ref(false);
 
@@ -22,12 +24,12 @@ async function handleRegister() {
 
     isLoading.value = true;
     try {
-        // 调用后端注册 API (对应 API 文档 A)
         const response = await api.post('/register', {
             username: username.value,
             password: password.value,
             email: email.value,
-            phone: phone.value
+            phone: phone.value,
+            isAdmin: isAdmin.value
         });
 
         if (response.data.success) {
@@ -43,7 +45,7 @@ async function handleRegister() {
 
     } catch (error: any) {
         console.error('注册请求失败:', error);
-        message.value = error.response?.data?.message || '请求失败，请检查服务器状态。';
+        message.value = error.response?.data?.message || '注册请求失败，请检查网络或服务器状态。';
     } finally {
         isLoading.value = false;
     }
@@ -70,6 +72,13 @@ async function handleRegister() {
                 <label for="phone">手机号:</label>
                 <input id="phone" type="tel" v-model="phone" required :disabled="isLoading">
             </div>
+            <!-- 添加是否为管理员的选项 -->
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" v-model="isAdmin" :disabled="isLoading">
+                    注册为商家账号
+                </label>
+            </div>
 
             <p
                 :class="{ 'success-message': message.includes('成功'), 'error-message': message && !message.includes('成功') }">
@@ -78,9 +87,7 @@ async function handleRegister() {
             <button type="submit" :disabled="isLoading">
                 {{ isLoading ? '注册中...' : '注册' }}
             </button>
-            <div class="link-to-login">
-                <router-link :to="{ name: 'login' }">已有账号？去登录</router-link>
-            </div>
+            <router-link :to="{ name: 'login' }">已有账号？去登录</router-link>
         </form>
     </div>
 </template>
@@ -106,7 +113,8 @@ async function handleRegister() {
     font-weight: bold;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 8px;
     box-sizing: border-box;
