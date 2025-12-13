@@ -31,14 +31,26 @@
           <router-link :to="'/product/' + product.id" class="product-card-link">
             <!-- 商品图片 -->
             <div class="product-image-container">
-              <!-- 图片代码 --><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"
-                class="product-image" loading="lazy" @error="handleImageError($event)" />
+              <img 
+                v-if="product.imageUrl" 
+                :src="processImageUrl(product.imageUrl)" 
+                :alt="product.name" 
+                class="product-image" 
+                loading="lazy" 
+                @error="handleImageError($event, product)" 
+                @load="handleImageLoad($event, product)"
+              />
               <div v-else class="no-image">
                 <i class="image-placeholder">📷</i>
                 <span>暂无图片</span>
               </div>
             </div>
 
+            <!-- 图片加载状态指示器 -->
+            <div v-if="imageLoadingStates[product.id]" class="image-loading-indicator">
+              <div class="loading-spinner-small"></div>
+            </div>
+            
             <!-- 商品信息 -->
             <div class="product-info">
               <h3 class="product-name">{{ product.name }}</h3>
@@ -75,10 +87,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import api from '@/utils/http'; // 你的 Axios 实例
-import type { Product } from '@/types'; // 导入项目已定义的Product类型
+import { ref, onMounted, reactive } from 'vue';
+import api from '@/utils/http';
+import type { Product } from '@/types';
 import { useCartStore } from '@/stores/cart';
+import { validateImageUrl, processImageUrl, checkImageLoadable, getFallbackImage } from '@/utils/imageUtils'; // 导入图片处理工具
 
 // 定义API响应类型
 interface ApiResponse {
@@ -91,6 +104,11 @@ const products = ref<Product[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
+// 图片加载状态管理
+const imageLoadingStates = reactive<Record<number, boolean>>({});
+const imageStatuses = reactive<Record<number, 'success' | 'error' | ''>>({});
+const imageStatusText = reactive<Record<number, string>>({});
+
 // 获取购物车store
 const cartStore = useCartStore();
 
@@ -98,17 +116,13 @@ async function fetchProducts() {
   isLoading.value = true;
   error.value = null;
   try {
-    // 调用 API: 获取所有商品列表
     const response = await api.get<ApiResponse>('/product');
-
-    // 添加调试信息，查看API返回的完整数据
-    console.log('API响应数据：', response.data);
-
-    // 检查响应是否成功
+    
     if (response.data.success) {
       products.value = response.data.data;
-      // 查看商品列表数据
-      console.log('商品列表数据：', products.value);
+      
+      // 验证并检查所有图片URL
+      validateAllImages(products.value);
     } else {
       throw new Error(response.data.message || '获取商品列表失败');
     }
@@ -120,38 +134,78 @@ async function fetchProducts() {
   }
 }
 
+// 验证所有商品图片
+async function validateAllImages(products: Product[]) {
+  for (const product of products) {
+    if (product.imageUrl) {
+      const validation = validateImageUrl(product.imageUrl);
+      if (!validation.valid) {
+        console.warn(`商品ID ${product.id} 图片URL无效: ${validation.error}`);
+        imageStatuses[product.id] = 'error';
+        imageStatusText[product.id] = `URL无效: ${validation.error}`;
+      } else {
+        // 检查图片是否可以加载
+        try {
+          const isLoadable = await checkImageLoadable(product.imageUrl);
+          if (!isLoadable) {
+            console.warn(`商品ID ${product.id} 图片无法加载: ${product.imageUrl}`);
+            imageStatuses[product.id] = 'error';
+            imageStatusText[product.id] = '图片无法加载';
+          } else {
+            imageStatuses[product.id] = 'success';
+            imageStatusText[product.id] = '图片正常';
+          }
+        } catch (err) {
+          console.warn(`商品ID ${product.id} 图片检查失败:`, err);
+        }
+      }
+    }
+  }
+}
+
+// 图片加载处理
+function handleImageLoad(event: Event, product: Product) {
+  const imgElement = event.target as HTMLImageElement;
+  imageLoadingStates[product.id] = false;
+  imageStatuses[product.id] = 'success';
+  imageStatusText[product.id] = '图片加载成功';
+  console.log(`商品ID ${product.id} 图片加载成功`);
+}
+
+// 图片加载错误处理
+function handleImageError(event: Event, product: Product) {
+  const imgElement = event.target as HTMLImageElement;
+  imageLoadingStates[product.id] = false;
+  imageStatuses[product.id] = 'error';
+  imageStatusText[product.id] = '图片加载失败';
+  
+  // 设置备用图片
+  imgElement.src = getFallbackImage(200, 200, '图片加载失败');
+  imgElement.onerror = null; // 防止递归调用
+  
+  console.error(`商品ID ${product.id} 图片加载失败:`, product.imageUrl);
+  showNotification(`商品 "${product.name}" 的图片加载失败`, 'error');
+}
+
 // 添加商品到购物车
 async function addToCart(productId: number) {
   try {
     await cartStore.addToCart(productId, 1);
-    // 使用更友好的提示方式
     showNotification('商品已成功添加到购物车！', 'success');
   } catch (err: any) {
     showNotification('添加商品到购物车失败：' + (err.message || '未知错误'), 'error');
   }
 }
 
-// 图片加载错误处理
-function handleImageError(event: Event) {
-  const imgElement = event.target as HTMLImageElement;
-  imgElement.style.display = 'none';
-  // 可以在这里添加备用图片
-}
-
 // 简单的通知函数
 function showNotification(message: string, type: 'success' | 'error') {
-  // 创建通知元素
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.textContent = message;
-
-  // 添加到页面
   document.body.appendChild(notification);
-
-  // 动画效果
+  
   setTimeout(() => notification.classList.add('show'), 10);
-
-  // 自动移除
+  
   setTimeout(() => {
     notification.classList.remove('show');
     setTimeout(() => document.body.removeChild(notification), 300);
@@ -163,7 +217,61 @@ onMounted(() => {
 });
 </script>
 
+<!-- 在ProductListView.vue的样式部分添加以下代码 -->
 <style scoped>
+/* 商品卡片悬停效果 */
+.product-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 商品图片悬停效果 */
+.product-image-container {
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+
+.product-image {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+/* 按钮悬停效果 */
+.add-to-cart-btn {
+  transition: all 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+}
+
+.add-to-cart-btn:active {
+  transform: translateY(0);
+}
+
+/* 购物车链接悬停效果 */
+.cart-link {
+  transition: all 0.3s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+}
+
+.cart-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
 /* 全局样式 */
 .product-list-container {
   max-width: 1400px;
@@ -232,13 +340,8 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* 错误信息 */
@@ -311,6 +414,9 @@ onMounted(() => {
   background-color: #f8f9fa;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .product-image {
@@ -318,6 +424,9 @@ onMounted(() => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  /* 添加图片平滑过渡效果 */
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .product-card:hover .product-image {
@@ -523,15 +632,11 @@ onMounted(() => {
 .notification.show {
   transform: translateX(0);
 }
+
 .product-card-link {
   text-decoration: none;
   color: inherit;
   display: block;
   height: 100%;
 }
-
-.product-card-link:hover {
-  text-decoration: none;
-}
-
 </style>

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import api from '@/utils/http';
 import type { AdminProduct } from '@/types';
+import { validateImageUrl, checkImageLoadable } from '@/utils/imageUtils'; // 导入图片处理工具
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -51,6 +52,28 @@ async function submitForm() {
         if (productForm.stock < 0) {
             errorMessage.value = '商品库存不能小于0';
             return;
+        }
+
+        // 图片URL验证
+        if (productForm.imageUrl) {
+            // 验证URL格式
+            const validation = validateImageUrl(productForm.imageUrl);
+            if (!validation.valid) {
+                errorMessage.value = `图片URL无效: ${validation.error}`;
+                return;
+            }
+            
+            // 检查图片是否可以加载
+            try {
+                const isLoadable = await checkImageLoadable(productForm.imageUrl);
+                if (!isLoadable) {
+                    errorMessage.value = '图片URL无法访问，请检查链接是否有效';
+                    return;
+                }
+            } catch (err) {
+                console.warn('图片加载检查失败:', err);
+                // 加载检查失败时不阻止表单提交，只记录警告
+            }
         }
 
         // 图片URL长度验证
@@ -151,7 +174,107 @@ async function submitForm() {
     </div>
 </template>
 
+<!-- 在AdminProductAddView.vue和AdminProductEditView.vue的样式部分添加以下代码 -->
 <style scoped>
+/* 表单容器 */
+.product-form {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.product-form:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* 浮动标签效果 */
+.input-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.floating-label {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: #7f8c8d;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  background-color: white;
+  padding: 0 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-input:focus + .floating-label,
+.form-input:not(:placeholder-shown) + .floating-label {
+  top: 0;
+  left: 0.75rem;
+  font-size: 0.8rem;
+  color: #3498db;
+  transform: translateY(-100%);
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #7f8c8d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(149, 165, 166, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .admin-product-add {
     min-height: 100vh;
     background-color: #f5f5f5;

@@ -89,6 +89,15 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null;
     try {
       const response = await api.delete(`/cart/${cartId}`);  // 移除重复的/api前缀
+      
+      // 特殊处理204 No Content响应
+      if (response.status === 204) {
+        // 重新获取购物车内容以保持同步
+        await fetchCartItems();
+        return true;
+      }
+      
+      // 正常处理其他响应
       if (response.data.success) {
         // 重新获取购物车内容以保持同步
         await fetchCartItems();

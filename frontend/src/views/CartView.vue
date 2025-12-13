@@ -14,6 +14,21 @@
     <div v-else class="cart-content">
       <div class="cart-items">
         <div v-for="item in cartStore.cartItems" :key="item.cart_id" class="cart-item">
+          <!-- 商品图片 -->
+          <div class="item-image">
+            <img 
+              v-if="item.image_url" 
+              :src="item.image_url" 
+              :alt="item.name" 
+              class="cart-product-image" 
+              loading="lazy" 
+              @error="handleImageError($event)" 
+            />
+            <div v-else class="no-image">
+              <i class="image-placeholder">📷</i>
+            </div>
+          </div>
+
           <div class="item-info">
             <h3>{{ item.name }}</h3>
             <p class="price">¥{{ item.price.toFixed(2) }}</p>
@@ -83,7 +98,6 @@ async function removeItem(cartId: number) {
 }
 
 // 结算功能
-// src/views/CartView.vue
 async function checkout() {
   try {
     // 跳转到订单确认页面
@@ -91,6 +105,14 @@ async function checkout() {
   } catch (error) {
     console.error('结算失败:', error);
   }
+}
+
+// 图片加载错误处理
+function handleImageError(event: Event) {
+  const imgElement = event.target as HTMLImageElement;
+  // 设置备用图片
+  imgElement.src = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22100%22 height%3D%22100%22 viewBox%3D%220 0 100 100%22%3E%3Crect width%3D%22100%22 height%3D%22100%22 fill%3D%22%23f5f5f5%22%2F%3E%3Ctext x%3D%2250%25%22 y%3D%2250%25%22 font-family%3D%22Arial%22 font-size%3D%2212%22 fill%3D%22%23999%22 text-anchor%3D%22middle%22 dy%3D%22.3em%22%3E暂无图片%3C%2Ftext%3E%3C%2Fsvg%3E';
+  imgElement.onerror = null; // 防止递归调用
 }
 </script>
 
@@ -132,6 +154,42 @@ async function checkout() {
   padding: 15px;
   border-bottom: 1px solid #ddd;
   gap: 20px;
+}
+
+/* 商品图片 */
+.item-image {
+  width: 100px;
+  height: 100px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.cart-product-image:hover {
+  transform: scale(1.05);
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.image-placeholder {
+  font-size: 2rem;
 }
 
 .item-info {

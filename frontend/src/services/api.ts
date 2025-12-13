@@ -43,14 +43,25 @@ async function request(method: string, url: string, data?: any, requiresAuth: bo
             timeoutPromise
         ]);
 
-        const jsonResponse = await response.json();
-
         if (!response.ok) {
             // 统一处理非 2xx 状态码
-            const errorMessage = jsonResponse.message || `请求失败，状态码: ${response.status}`;
+            let errorMessage = `请求失败，状态码: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // 如果无法解析错误响应，使用默认错误信息
+            }
             throw new Error(errorMessage);
         }
 
+        // 特殊处理 204 No Content 响应
+        if (response.status === 204) {
+            return { success: true, message: '操作成功' };
+        }
+
+        // 正常解析 JSON 响应
+        const jsonResponse = await response.json();
         return jsonResponse;
     } catch (error) {
         console.error('API Request Error:', error);
