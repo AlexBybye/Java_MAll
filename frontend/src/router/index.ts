@@ -17,6 +17,11 @@ import AdminOrderDetailView from '../views/AdminOrderDetailView.vue'
 import AdminProductEditView from '../views/AdminProductEditView.vue';
 // 引入 auth store 用于导航守卫
 import { useAuthStore } from '@/stores/auth'
+import OrderConfirmationView from '../views/OrderConfirmationView.vue';
+import OrderSuccessView from '../views/OrderSuccessView.vue';
+import UserOrderListView from '../views/UserOrderListView.vue'
+import UserOrderDetailView from '../views/UserOrderDetailView.vue'
+import ProductDetailView from '../views/ProductDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,7 +56,35 @@ const router = createRouter({
       component: ProfileView, // 使用新创建的ProfileView组件
       meta: { requiresAuth: true }
     },
-
+    {
+      path: '/order-confirmation',
+      name: 'order-confirmation',
+      component: OrderConfirmationView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/order-success',
+      name: 'order-success',
+      component: OrderSuccessView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/orders',
+      name: 'user-orders',
+      component: UserOrderListView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/orders/:id',
+      name: 'user-order-detail',
+      component: UserOrderDetailView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/product/:id', // 产品详情页路由
+      name: 'product-detail',
+      component: ProductDetailView
+    },
     // 商家 (Admin) 路由，全部嵌套在 AdminDashboard 下
     {
       path: '/admin',

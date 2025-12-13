@@ -2,11 +2,11 @@
 
 const API_BASE_URL = '/api'; // 假设配置了代理或同源
 
-async function request(method: string, url: string, data?: any, requiresAuth: boolean = false) {
+async function request(method: string, url: string, data?: any, requiresAuth: boolean = false, timeout: number = 10000) {
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
-    
+
     if (requiresAuth) {
         const token = localStorage.getItem('token'); // 从 localStorage 获取 token
         if (!token) {
@@ -31,9 +31,18 @@ async function request(method: string, url: string, data?: any, requiresAuth: bo
     } else if (data) {
         config.body = JSON.stringify(data);
     }
-    
+
     try {
-        const response = await fetch(fullUrl, config);
+        // 使用 Promise.race 实现超时
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Request timed out')), timeout);
+        });
+
+        const response = await Promise.race([
+            fetch(fullUrl, config),
+            timeoutPromise
+        ]);
+
         const jsonResponse = await response.json();
 
         if (!response.ok) {
@@ -46,7 +55,7 @@ async function request(method: string, url: string, data?: any, requiresAuth: bo
     } catch (error) {
         console.error('API Request Error:', error);
         // 抛出错误，以便组件可以捕获和显示
-        throw error; 
+        throw error;
     }
 }
 
@@ -59,7 +68,7 @@ export const api = {
     // 2. 用户管理
     getProfile: () => request('GET', '/customer/profile', null, true),
     updateProfile: (data: any) => request('PUT', '/customer/profile', data, true),
-    
+
     // 3. 产品管理 (普通用户)
     getProducts: () => request('GET', '/product'),
     getProductDetail: (id: number) => request('GET', `/product/${id}`),
@@ -68,7 +77,7 @@ export const api = {
     addProduct: (data: any) => request('POST', '/product', data, true),
     updateProduct: (id: number, data: any) => request('PUT', `/product/${id}`, data, true),
     deleteProduct: (id: number) => request('DELETE', `/product/${id}`, null, true),
-    
+
     // 4. 购物车管理
     getCart: () => request('GET', '/cart', null, true),
     addItemToCart: (productId: number, quantity: number) => request('POST', '/cart', { productId, quantity }, true),
@@ -83,7 +92,7 @@ export const api = {
     getAllOrders: () => request('GET', '/order/all', null, true),
     updateOrderStatus: (id: number, status: string) => request('PUT', `/order/${id}/status`, { status }, true),
     deleteOrder: (id: number) => request('DELETE', `/order/${id}`, null, true),
-    
+
     // 6. 统计模块 (管理员)
     getStats: () => request('GET', '/stats', null, true),
     getDailySales: (params: { startDate: string, endDate: string }) => request('GET', '/stats/daily', params, true),

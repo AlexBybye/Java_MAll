@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import api from '@/utils/http';
+import { api } from '@/services/api'; // 使用services/api.ts中的API
 import type { StatsOverview, DailySales, MonthlySales, TopSellingProduct, OrderStatusStats } from '@/types';
 
 const router = useRouter();
@@ -47,9 +47,9 @@ async function loadStatsData() {
         isLoading.value = true;
 
         // 获取统计概览
-        const overviewResponse = await api.get('/stats'); // 修改：/admin/stats → /stats
-        if (overviewResponse.data.success) {
-            statsOverview.value = overviewResponse.data.data;
+        const overviewResponse = await api.getStats();
+        if (overviewResponse.success) {
+            statsOverview.value = overviewResponse.data;
         }
 
         // 获取每日销售数据（最近30天）
@@ -57,40 +57,32 @@ async function loadStatsData() {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(today.getDate() - 30);
 
-        const dailySalesResponse = await api.get('/stats/daily', { // 修改：/admin/stats/daily → /stats/daily
-            params: {
-                startDate: thirtyDaysAgo.toISOString().split('T')[0],
-                endDate: today.toISOString().split('T')[0]
-            }
+        const dailySalesResponse = await api.getDailySales({
+            startDate: thirtyDaysAgo.toISOString().split('T')[0] as string,
+            endDate: today.toISOString().split('T')[0] as string
         });
-        if (dailySalesResponse.data.success) {
-            dailySales.value = dailySalesResponse.data.data;
+        if (dailySalesResponse.success) {
+            dailySales.value = dailySalesResponse.data;
         }
 
         // 获取月度销售数据（今年）
-        const monthlySalesResponse = await api.get('/stats/monthly', { // 修改：/admin/stats/monthly → /stats/monthly
-            params: {
-                year: today.getFullYear().toString()
-            }
+        const monthlySalesResponse = await api.getMonthlySales({
+            year: today.getFullYear().toString()
         });
-        if (monthlySalesResponse.data.success) {
-            monthlySales.value = monthlySalesResponse.data.data;
+        if (monthlySalesResponse.success) {
+            monthlySales.value = monthlySalesResponse.data;
         }
 
         // 获取热销商品数据（前10名）
-        const topProductsResponse = await api.get('/stats/top-products', { // 修改：/admin/stats/top-products → /stats/top-products
-            params: {
-                limit: 10
-            }
-        });
-        if (topProductsResponse.data.success) {
-            topSellingProducts.value = topProductsResponse.data.data;
+        const topProductsResponse = await api.getTopProducts({ limit: 10 });
+        if (topProductsResponse.success) {
+            topSellingProducts.value = topProductsResponse.data;
         }
 
         // 获取订单状态统计
-        const orderStatusResponse = await api.get('/stats/order-status'); // 修改：/stats/status → /stats/order-status
-        if (orderStatusResponse.data.success) {
-            orderStatusStats.value = orderStatusResponse.data.data;
+        const orderStatusResponse = await api.getOrderStatusStats();
+        if (orderStatusResponse.success) {
+            orderStatusStats.value = orderStatusResponse.data;
         }
     } catch (error) {
         console.error('加载统计数据失败:', error);

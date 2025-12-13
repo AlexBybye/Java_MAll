@@ -83,14 +83,11 @@ async function removeItem(cartId: number) {
 }
 
 // 结算功能
+// src/views/CartView.vue
 async function checkout() {
   try {
-    // 这里需要实现结算逻辑，例如跳转到订单确认页面
-    // 或者直接创建订单
-    alert('结算功能开发中');
-    // 示例：
-    // const cartItemIds = cartStore.cartItems.map(item => item.cart_id);
-    // await api.post('/order', { shippingAddress: '默认地址', cartItemIds });
+    // 跳转到订单确认页面
+    router.push('/order-confirmation');
   } catch (error) {
     console.error('结算失败:', error);
   }

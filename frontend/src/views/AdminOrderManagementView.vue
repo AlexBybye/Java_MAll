@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import api from '@/utils/http';
+import { api } from '@/services/api';
 import type { AdminOrder } from '@/types';
 
 const router = useRouter();
@@ -37,9 +37,9 @@ onMounted(() => {
 async function loadOrders() {
   try {
     isLoading.value = true;
-    const response = await api.get('/order/all'); // 修改：/admin/orders → /order/all
-    if (response.data.success) {
-      orders.value = response.data.data;
+    const response = await api.getAllOrders();
+    if (response.success) {
+      orders.value = response.orders;
     }
   } catch (error) {
     console.error('加载订单列表失败:', error);
@@ -51,10 +51,8 @@ async function loadOrders() {
 // 更新订单状态
 async function updateOrderStatus(orderId: number, newStatus: string) {
   try {
-    const response = await api.put(`/order/${orderId}/status`, { // 修改：/admin/orders/${orderId}/status → /order/${orderId}/status
-      status: newStatus
-    });
-    if (response.data.success) {
+    const response = await api.updateOrderStatus(orderId, newStatus);
+    if (response.success) {
       // 重新加载订单列表
       loadOrders();
     }

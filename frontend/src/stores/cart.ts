@@ -124,6 +124,33 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
+  // 创建订单
+  async function createOrder(shippingAddress: string) {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      // 获取购物车项ID列表
+      const cartItemIds = cartItems.value.map(item => item.cart_id);
+
+      // 调用后端API创建订单
+      const response = await api.post('/order', { shippingAddress, cartItemIds });
+
+      if (response.data.success) {
+        // 订单创建成功后清空购物车
+        await clearCart();
+        return true;
+      } else {
+        throw new Error(response.data.message || '创建订单失败');
+      }
+    } catch (err: any) {
+      error.value = err.message || '创建订单失败';
+      console.error('创建订单失败:', err);
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     cartItems,
     isLoading,
@@ -134,6 +161,7 @@ export const useCartStore = defineStore('cart', () => {
     addToCart,
     updateCartItemQuantity,
     removeCartItem,
-    clearCart
+    clearCart,
+    createOrder  // 添加到返回对象中
   };
 });

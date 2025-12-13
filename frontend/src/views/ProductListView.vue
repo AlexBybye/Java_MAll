@@ -27,37 +27,41 @@
       <!-- 有商品时显示商品列表 -->
       <div v-if="products.length > 0" class="products-grid">
         <div v-for="product in products" :key="product.id" class="product-card">
-          <!-- 商品图片 -->
-          <div class="product-image-container">
-            <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-image"
-              loading="lazy" @error="handleImageError($event)" />
-            <div v-else class="no-image">
-              <i class="image-placeholder">📷</i>
-              <span>暂无图片</span>
+          <!-- 在ProductListView.vue的商品卡片中 -->
+          <router-link :to="'/product/' + product.id" class="product-card-link">
+            <!-- 商品图片 -->
+            <div class="product-image-container">
+              <!-- 图片代码 --><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"
+                class="product-image" loading="lazy" @error="handleImageError($event)" />
+              <div v-else class="no-image">
+                <i class="image-placeholder">📷</i>
+                <span>暂无图片</span>
+              </div>
             </div>
+
+            <!-- 商品信息 -->
+            <div class="product-info">
+              <h3 class="product-name">{{ product.name }}</h3>
+              <!-- 其他信息代码 -->
+            </div>
+          </router-link>
+
+          <!-- 商品URL -->
+          <div v-if="product.imageUrl" class="product-url">
+            <a :href="product.imageUrl" target="_blank" rel="noopener noreferrer" class="url-link">
+              <i class="url-icon">🔗</i>
+              查看图片
+            </a>
           </div>
 
-          <!-- 商品信息 -->
-          <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-
-            <!-- 商品URL -->
-            <div v-if="product.imageUrl" class="product-url">
-              <a :href="product.imageUrl" target="_blank" rel="noopener noreferrer" class="url-link">
-                <i class="url-icon">🔗</i>
-                查看图片
-              </a>
-            </div>
-
-            <div class="product-meta">
-              <span class="product-price">¥{{ product.price.toFixed(2) }}</span>
-              <span class="product-stock" :class="{ 'out-of-stock': product.stockQuantity <= 0 }">
-                {{ product.stockQuantity <= 0 ? '已售罄' : `库存: ${product.stockQuantity}` }} </span>
-            </div>
-
-            <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0">
-              {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }} </button>
+          <div class="product-meta">
+            <span class="product-price">¥{{ product.price.toFixed(2) }}</span>
+            <span class="product-stock" :class="{ 'out-of-stock': product.stockQuantity <= 0 }">
+              {{ product.stockQuantity <= 0 ? '已售罄' : `库存: ${product.stockQuantity}` }} </span>
           </div>
+
+          <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0">
+            {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }} </button>
         </div>
       </div>
 
@@ -519,4 +523,15 @@ onMounted(() => {
 .notification.show {
   transform: translateX(0);
 }
+.product-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+.product-card-link:hover {
+  text-decoration: none;
+}
+
 </style>

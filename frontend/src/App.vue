@@ -35,6 +35,7 @@ function handleLogout() {
           <template v-if="!authStore.isAdmin">
             <router-link to="/" class="nav-link">商品浏览</router-link>
             <router-link to="/cart" class="nav-link">购物车</router-link>
+            <router-link :to="{ name: 'user-orders' }" class="nav-link">我的订单</router-link> <!-- 添加这一行 -->
             <router-link :to="{ name: 'profile' }" class="nav-link">个人信息</router-link>
           </template>
           <template v-if="authStore.isAdmin">
@@ -48,12 +49,14 @@ function handleLogout() {
           <button @click="handleLogout" class="logout-btn">退出</button>
         </div>
       </div>
+      <div>
+        <img src="../public/YbMall.jpeg" alt="Admin Icon" class="admin-icon" style="display: block; margin: 0 auto;" />
+      </div>
     </nav>
-    <div>
-      <img src="../public/YbMall.jpeg" alt="Admin Icon" class="admin-icon" style="display: block; margin: 0 auto;" />
-    </div>
     <main class="main-content">
+
       <RouterView />
+
     </main>
   </div>
 </template>
