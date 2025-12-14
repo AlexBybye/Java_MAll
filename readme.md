@@ -6,6 +6,8 @@
 [![Docker](https://img.shields.io/badge/Docker-20.10-red.svg)](https://www.docker.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-pink.svg)](https://www.typescriptlang.org/)
 
+<img src="frontend/public/YbMall.jpeg" alt="JavaMall" width="600" height="180">
+
 ## 项目简介
 
 JavaMall是一个基于前后端分离架构的电商网站系统，提供完整的线上购物解决方案。该系统支持用户注册登录、商品浏览、购物车管理、订单处理以及管理员后台管理等核心功能，旨在为用户提供便捷的购物体验和高效的管理工具。
