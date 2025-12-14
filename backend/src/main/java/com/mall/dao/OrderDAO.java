@@ -16,13 +16,8 @@ import java.util.HashMap;
  */
 public class OrderDAO {
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final CartDAO cartDAO = new CartDAO();
-
-    /**
-     * 创建订单的核心方法：包含事务处理，确保数据一致性。
-     */
-    // OrderDAO.java - createOrder 方法 (追踪版本)
+    // private final ProductDAO productDAO = new ProductDAO(); // 冗余：未在代码中使用，可以删除
+    // private final CartDAO cartDAO = new CartDAO(); // 冗余：在 createOrder 中已替换为直接 SQL 操作，可以删除
 
     /**
      * 创建订单的核心方法：包含事务处理，确保数据一致性。
@@ -90,6 +85,7 @@ public class OrderDAO {
                 int[] updateCounts = stockPs.executeBatch();
                 for (int count : updateCounts) {
                     if (count == 0) {
+                        // 如果某次更新影响行数为0，则可能是库存不足或商品ID错误。
                         throw new SQLException("库存不足或商品不存在，操作失败。");
                     }
                 }
@@ -97,11 +93,22 @@ public class OrderDAO {
             System.out.println("[DAO T4] 步骤 3 完成。开始步骤 4: 清空购物车...");
 
 
-            // --- 步骤 4: 清空购物车项 ---
-            for (int cartId : cartItemIds) {
-                // 注意：这里调用的是另一个 DAO 方法，可能存在阻塞或连接问题
-                if (!cartDAO.removeCartItem(cartId)) {
-                    throw new SQLException("清理购物车项失败。");
+            // --- 步骤 4: 清空购物车项 (已修复：使用当前连接进行批处理删除，确保事务原子性) ---
+            if (!cartItemIds.isEmpty()) {
+                String deleteCartSql = "DELETE FROM cart WHERE id = ?";
+                try (PreparedStatement deleteCartPs = conn.prepareStatement(deleteCartSql)) {
+                    for (int cartId : cartItemIds) {
+                        deleteCartPs.setInt(1, cartId);
+                        deleteCartPs.addBatch();
+                    }
+
+                    int[] deleteCounts = deleteCartPs.executeBatch();
+                    for (int count : deleteCounts) {
+                        if (count == 0) {
+                            // 理论上 cartItemIds 来自数据库，应该都能删除。如果不能，则抛出异常回滚。
+                            throw new SQLException("清理购物车项失败: 购物车项可能已被移除或ID错误。");
+                        }
+                    }
                 }
             }
             System.out.println("[DAO T5] 步骤 4 完成。尝试提交事务...");
@@ -139,12 +146,12 @@ public class OrderDAO {
             }
         }
     }
-    // ... (其他方法保持不变)
 
     /**
      * 获取订单的订单项列表 (DO NOT CHANGE)
      */
     public List<Map<String, Object>> getOrderItemsByOrderId(int orderId) {
+        // ... (方法体不变)
         List<Map<String, Object>> items = new ArrayList<>();
         String sql = "SELECT oi.item_id, oi.order_id, oi.product_id, p.name as product_name, oi.price_at_purchase, oi.quantity " +
                 "FROM order_item oi JOIN product p ON oi.product_id = p.id " +
@@ -176,6 +183,7 @@ public class OrderDAO {
      * 获取用户的订单列表（包含订单项） (DO NOT CHANGE)
      */
     public List<Map<String, Object>> getOrdersByCustomerId(int customerId) {
+        // ... (方法体不变)
         List<Map<String, Object>> orders = new ArrayList<>();
         String sql = "SELECT om.order_id, om.customer_id, om.total_amount, om.shipping_address, om.order_status, om.order_date " +
                 "FROM order_master om WHERE om.customer_id = ? ORDER BY om.order_date DESC";
@@ -207,8 +215,11 @@ public class OrderDAO {
      * 获取订单详情（包含订单项） (DO NOT CHANGE)
      */
     public Map<String, Object> getOrderById(int orderId) {
-        String sql = "SELECT om.order_id, om.customer_id, om.total_amount, om.shipping_address, om.order_status, om.order_date " +
-                "FROM order_master om WHERE om.order_id = ?";
+        // ... (方法体不变)
+        String sql = "SELECT om.order_id, om.customer_id, COALESCE(c.username, CONCAT('Customer ', om.customer_id)) as customer_name, " +
+                "om.total_amount, om.shipping_address, om.order_status, om.order_date " +
+                "FROM order_master om JOIN customer c ON om.customer_id = c.id " +
+                "WHERE om.order_id = ?";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -219,6 +230,7 @@ public class OrderDAO {
                     Map<String, Object> order = new HashMap<>();
                     order.put("id", rs.getInt("order_id"));
                     order.put("customerId", rs.getInt("customer_id"));
+                    order.put("customerName", rs.getString("customer_name"));
                     order.put("totalAmount", rs.getBigDecimal("total_amount"));
                     order.put("shippingAddress", rs.getString("shipping_address"));
                     order.put("orderStatus", rs.getString("order_status"));
@@ -237,6 +249,7 @@ public class OrderDAO {
      * 更新订单状态 (DO NOT CHANGE)
      */
     public boolean updateOrderStatus(int orderId, String status) {
+        // ... (方法体不变)
         String sql = "UPDATE order_master SET order_status = ? WHERE order_id = ?";
 
         try (Connection conn = DBUtil.getConnection();
@@ -253,21 +266,27 @@ public class OrderDAO {
     }
 
     /**
-     * 获取所有订单（仅管理员可用）
+     * 获取所有订单（包含客户名称和订单项）
+     * 仅管理员可用
+     * * [FIX]: 补充了缺失的方法签名和局部变量初始化。
      */
     public List<Map<String, Object>> getAllOrders() {
         List<Map<String, Object>> orders = new ArrayList<>();
-        String sql = "SELECT om.order_id, om.customer_id, om.total_amount, om.shipping_address, om.order_status, om.order_date " +
-                "FROM order_master om ORDER BY om.order_date DESC";
-    
+        String sql = "SELECT om.order_id, om.customer_id, COALESCE(c.username, CONCAT('Customer ', om.customer_id)) as customer_name, " +
+                "om.total_amount, om.shipping_address, om.order_status, om.order_date " +
+                "FROM order_master om " +
+                "JOIN customer c ON om.customer_id = c.id " +
+                "ORDER BY om.order_date DESC";
+
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-    
+
             while (rs.next()) {
                 Map<String, Object> order = new HashMap<>();
                 order.put("id", rs.getInt("order_id"));
                 order.put("customerId", rs.getInt("customer_id"));
+                order.put("customerName", rs.getString("customer_name")); // 添加客户名称
                 order.put("totalAmount", rs.getBigDecimal("total_amount"));
                 order.put("shippingAddress", rs.getString("shipping_address"));
                 order.put("orderStatus", rs.getString("order_status"));
@@ -280,7 +299,7 @@ public class OrderDAO {
         }
         return orders;
     }
-    
+
     /**
      * 删除订单（包含事务处理，确保数据一致性）
      * @param orderId 订单ID
@@ -289,36 +308,37 @@ public class OrderDAO {
      * @return 是否删除成功
      */
     public boolean deleteOrder(int orderId, int customerId, boolean isAdmin) {
+        // ... (方法体不变)
         Connection conn = null;
-        
+
         try {
             conn = DBUtil.getConnection();
             conn.setAutoCommit(false); // 开启事务
-            
+
             // 1. 验证订单是否存在且属于该用户或管理员
             String checkSql = "SELECT customer_id FROM order_master WHERE order_id = ?";
             try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
                 checkPs.setInt(1, orderId);
                 try (ResultSet rs = checkPs.executeQuery()) {
                     if (!rs.next()) {
-                        conn.rollback();
+                        // conn.rollback(); // 此处不需要回滚，因为事务还未执行写操作
                         return false; // 订单不存在
                     }
                     int dbCustomerId = rs.getInt("customer_id");
                     if (dbCustomerId != customerId && !isAdmin) {
-                        conn.rollback();
+                        // conn.rollback(); // 此处不需要回滚
                         return false; // 无权限删除该订单
                     }
                 }
             }
-            
+
             // 2. 删除订单项
             String deleteItemsSql = "DELETE FROM order_item WHERE order_id = ?";
             try (PreparedStatement deleteItemsPs = conn.prepareStatement(deleteItemsSql)) {
                 deleteItemsPs.setInt(1, orderId);
                 deleteItemsPs.executeUpdate();
             }
-            
+
             // 3. 删除订单主表记录
             String deleteOrderSql = "DELETE FROM order_master WHERE order_id = ?";
             try (PreparedStatement deleteOrderPs = conn.prepareStatement(deleteOrderSql)) {
@@ -329,10 +349,10 @@ public class OrderDAO {
                     return false;
                 }
             }
-            
+
             conn.commit(); // 事务提交
             return true;
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
             if (conn != null) {

@@ -15,7 +15,7 @@ public class EmailUtil {
     private static final String HOST = "smtp.qq.com"; // 示例：QQ邮箱 SMTP
     private static final String PORT = "465"; // SSL 端口
     private static final String USERNAME = "244417287@qq.com"; // 你的邮箱账号
-    private static final String PASSWORD = "eennhsyjlzgibghf"; //
+    private static final String PASSWORD = "oydpftbtjadtcbcj"; //
 
     public static void sendEmail(String toEmail, String subject, String content) {
 

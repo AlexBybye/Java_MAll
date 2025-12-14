@@ -38,15 +38,19 @@ async function loadOrders() {
   try {
     isLoading.value = true;
     const response = await api.getAllOrders();
+    console.log('API Response:', response); // 添加调试信息
     if (response.success) {
       // 修复：将后端返回的orderStatus字段映射为status字段
       orders.value = response.orders.map((order:any) => ({
         ...order,
         status: order.orderStatus
       }));
+      console.log('Processed Orders:', orders.value); // 添加调试信息
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('加载订单列表失败:', error);
+    // 添加错误信息显示
+    alert('加载订单列表失败: ' + (error.message || '未知错误'));
   } finally {
     isLoading.value = false;
   }

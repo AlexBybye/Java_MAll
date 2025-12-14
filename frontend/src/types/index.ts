@@ -73,6 +73,7 @@ export interface OrderItem {
 export interface OrderMaster {
   id: number;
   customerId: number;
+  customerName?: string; // 新增客户名称字段，设为可选
   totalAmount: number;
   shippingAddress: string;
   orderStatus: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED';

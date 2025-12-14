@@ -24,7 +24,9 @@ public class StatsDAO {
         // 获取订单总数
         String orderSql = "SELECT COUNT(*) as total FROM order_master";
         // 获取总收入
-        String revenueSql = "SELECT SUM(total_amount) as total FROM order_master";
+        // 在getStatsOverview()方法中，修改revenueSql：
+        String revenueSql = "SELECT SUM(total_amount) as total FROM order_master WHERE order_status != 'CANCELLED'";
+        
         // 获取待处理订单数
         String pendingSql = "SELECT COUNT(*) as total FROM order_master WHERE order_status = 'PENDING'";
         
@@ -84,12 +86,12 @@ public class StatsDAO {
      */
     public List<Map<String, Object>> getDailySales(String startDate, String endDate) {
         List<Map<String, Object>> dailySales = new ArrayList<>();
+        // 在getDailySales()方法中，修改SQL查询：
         String sql = "SELECT DATE(order_date) as sale_date, SUM(total_amount) as sales_amount, COUNT(*) as order_count " +
                 "FROM order_master " +
-                "WHERE DATE(order_date) BETWEEN ? AND ? " +
+                "WHERE DATE(order_date) BETWEEN ? AND ? AND order_status != 'CANCELLED' " +
                 "GROUP BY DATE(order_date) " +
                 "ORDER BY sale_date";
-
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -118,12 +120,12 @@ public class StatsDAO {
      */
     public List<Map<String, Object>> getMonthlySales(String year) {
         List<Map<String, Object>> monthlySales = new ArrayList<>();
+        // 在getMonthlySales()方法中，修改SQL查询：
         String sql = "SELECT MONTH(order_date) as month, SUM(total_amount) as sales_amount, COUNT(*) as order_count " +
                 "FROM order_master " +
-                "WHERE YEAR(order_date) = ? " +
+                "WHERE YEAR(order_date) = ? AND order_status != 'CANCELLED' " +
                 "GROUP BY MONTH(order_date) " +
                 "ORDER BY month";
-
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -151,10 +153,13 @@ public class StatsDAO {
      */
     public List<Map<String, Object>> getTopSellingProducts(int limit) {
         List<Map<String, Object>> topProducts = new ArrayList<>();
+        // 在getTopSellingProducts()方法中，修改SQL查询，添加订单状态过滤：
         String sql = "SELECT p.id, p.name, SUM(oi.quantity) as total_sales, " +
                 "SUM(oi.price_at_purchase * oi.quantity) as total_revenue " +
                 "FROM order_item oi " +
                 "JOIN product p ON oi.product_id = p.id " +
+                "JOIN order_master om ON oi.order_id = om.order_id " +
+                "WHERE om.order_status != 'CANCELLED' " +
                 "GROUP BY p.id, p.name " +
                 "ORDER BY total_sales DESC " +
                 "LIMIT ?";
