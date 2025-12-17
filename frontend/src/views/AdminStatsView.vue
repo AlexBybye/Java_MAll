@@ -111,7 +111,7 @@ async function loadStatsData() {
             dailySales.value = (allStats.dailySales || []).map((item: any) => {
                 // 确保日期字段存在且为字符串
                 let date = item.sale_date || item.date || '';
-                
+
                 // 处理Java序列化的日期格式（如 /Date(1733049600000)/）
                 if (typeof date === 'string' && date.startsWith('/Date(') && date.endsWith(')/')) {
                     // 提取时间戳部分
@@ -123,7 +123,7 @@ async function loadStatsData() {
                 else if (date instanceof Date) {
                     date = date.toISOString();
                 }
-// 如果日期是数字（时间戳），转换为ISO字符串
+                // 如果日期是数字（时间戳），转换为ISO字符串
                 else if (typeof date === 'number') {
                     date = new Date(date).toISOString();
                 }
@@ -152,7 +152,7 @@ async function loadStatsData() {
                         }
                     }
                 }
-                
+
                 return {
                     date: date,
                     salesAmount: item.sales_amount || item.salesAmount || 0,
@@ -203,8 +203,8 @@ function drawPieChart(ctx: CanvasRenderingContext2D, data: OrderStatusStats[], w
     // 如果没有数据，直接返回
     if (data.length === 0) return;
 
-    // 定义颜色数组
-    const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+    // 扩展颜色数组，确保有足够的不同颜色（至少7种）
+    const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#95a5a6'];
 
     // 计算起始角度
     let startAngle = 0;
@@ -240,7 +240,9 @@ function drawPieChart(ctx: CanvasRenderingContext2D, data: OrderStatusStats[], w
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         if (item.percentage > 5) { // 优化：只有百分比足够大才绘制标签
-            ctx.fillText(item.orderStatus, labelX, labelY);
+            // 统一订单状态名称的大小写：首字母大写，其余小写
+            const formattedStatus = item.orderStatus.charAt(0).toUpperCase() + item.orderStatus.slice(1).toLowerCase();
+            ctx.fillText(formattedStatus, labelX, labelY);
         }
 
         // 更新起始角度
@@ -301,7 +303,7 @@ function drawLineChart() {
     const chartHeight = canvas.height - margin.top - margin.bottom;
 
     // 计算数据范围
-    const maxAmount = maxSalesAmount.value;
+    const maxAmount = Math.max(maxSalesAmount.value, 0.001); // 最小0.001防止除以0
 
     // 绘制网格线
     ctx.strokeStyle = '#e0e0e0';
@@ -309,7 +311,7 @@ function drawLineChart() {
 
     // 绘制垂直网格线 (一个数据点一条线)
     const dataPoints = salesData.length;
-    const stepX = dataPoints > 1 ? chartWidth / (dataPoints - 1) : chartWidth; 
+    const stepX = dataPoints > 1 ? chartWidth / (dataPoints - 1) : chartWidth;
     salesData.forEach((_, i) => {
         const x = margin.left + i * stepX;
         ctx.beginPath();
@@ -320,7 +322,7 @@ function drawLineChart() {
 
     // 绘制水平网格线 (5 等分)
     for (let i = 0; i <= 5; i++) {
-        const y = margin.top + (i / 5) * chartHeight;
+        const y = canvas.height - margin.bottom - (i / 5) * chartHeight;
         ctx.beginPath();
         ctx.moveTo(margin.left, y);
         ctx.lineTo(margin.left + chartWidth, y);
@@ -334,8 +336,11 @@ function drawLineChart() {
 
     salesData.forEach((item: DailySales, index: number) => {
         const x = margin.left + index * stepX;
-        const y = margin.top + chartHeight - ((item.salesAmount || 0) / maxAmount) * chartHeight;
-
+        // 修复3：Y轴核心计算逻辑，确保0值落在底部基线（canvas.height - margin.bottom）
+        const salesValue = Math.max(item.salesAmount || 0, 0); // 确保数值非负
+        let y = canvas.height - margin.bottom - (salesValue / maxAmount) * chartHeight;
+        // 修复4：确保Y坐标在画布可视范围内（不超出顶部/底部）
+        y = Math.max(margin.top, Math.min(y, canvas.height - margin.bottom));
         if (index === 0) {
             ctx.moveTo(x, y);
         } else {
@@ -454,10 +459,7 @@ function formatDate(dateString: string): string {
                 暂无月度销售数据
             </div>
             <div v-else class="month-heatmap-container">
-                <MonthHeatmap 
-                    :month-data="monthlyHeatmapData"
-                    :max-value="maxMonthlySalesValue" 
-                />
+                <MonthHeatmap :month-data="monthlyHeatmapData" :max-value="maxMonthlySalesValue" />
             </div>
         </div>
 
@@ -486,24 +488,16 @@ function formatDate(dateString: string): string {
                                 </div>
                             </div>
                             <div class="chart-grid">
-                                <canvas 
-                                    ref="lineChartCanvas" 
-                                    class="line-chart-canvas" 
-                                    width="800"
-                                    height="300"
-                                ></canvas>
+                                <canvas ref="lineChartCanvas" class="line-chart-canvas" width="800"
+                                    height="300"></canvas>
                                 <div class="x-axis">
-                                    <div 
-                                        v-for="(day, index) in dailySales" 
-                                        :key="day.date" 
-                                        class="x-tick" 
-                                        :style="{
-                                            left: `${dailySales.length > 1 ? index * (100 / (dailySales.length - 1)) : 0}%`,
-                                            transform: index === dailySales.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
-                                        }"
-                                    >
+                                    <div v-for="(day, index) in dailySales" :key="day.date" class="x-tick" :style="{
+                                        left: `${dailySales.length > 1 ? index * (100 / (dailySales.length - 1)) : 0}%`,
+                                        transform: index === dailySales.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
+                                    }">
                                         <!-- 修复日期显示NaN问题：添加安全检查 -->
-                                        {{ day.date ? (new Date(day.date).getMonth() + 1) + '/' + (new Date(day.date).getDate()) : '-' }}
+                                        {{ day.date ? (new Date(day.date).getMonth() + 1) + '/' + (new
+                                        Date(day.date).getDate()) : '-' }}
                                     </div>
                                 </div>
                             </div>
@@ -530,13 +524,8 @@ function formatDate(dateString: string): string {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr 
-                            v-for="(product, index) in topSellingProducts" 
-                            :key="product.productId" 
-                            class="product-row"
-                            @mouseenter="showTooltip($event, JSON.stringify(product))" 
-                            @mouseleave="hideTooltip"
-                        >
+                        <tr v-for="(product, index) in topSellingProducts" :key="product.productId" class="product-row"
+                            @mouseenter="showTooltip($event, JSON.stringify(product))" @mouseleave="hideTooltip">
                             <td>{{ index + 1 }}</td>
                             <td>{{ product.productName }}</td>
                             <td>{{ product.totalSales }}</td>
@@ -544,15 +533,11 @@ function formatDate(dateString: string): string {
                         </tr>
                     </tbody>
                 </table>
-                <div 
-                    ref="tooltip" 
-                    class="product-tooltip" 
-                    :style="{
-                        left: `${tooltipPosition.x}px`,
-                        top: `${tooltipPosition.y}px`,
-                        opacity: tooltipVisible ? 1 : 0
-                    }"
-                >
+                <div ref="tooltip" class="product-tooltip" :style="{
+                    left: `${tooltipPosition.x}px`,
+                    top: `${tooltipPosition.y}px`,
+                    opacity: tooltipVisible ? 1 : 0
+                }">
                     <div class="tooltip-content">
                         <h4>{{ tooltipProduct.productName }}</h4>
                         <p>销售数量: {{ tooltipProduct.totalSales }}</p>
@@ -577,15 +562,10 @@ function formatDate(dateString: string): string {
                 </div>
                 <!-- 将图例移到饼状图右侧 -->
                 <div class="pie-legend">
-                    <div 
-                        v-for="(status, index) in orderStatusStats" 
-                        :key="status.orderStatus" 
-                        class="legend-item"
-                    >
-                        <div 
-                            class="legend-color"
-                            :style="{ backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'][index % 6] }"
-                        ></div>
+                    <div v-for="(status, index) in orderStatusStats" :key="status.orderStatus" class="legend-item">
+                        <div class="legend-color"
+                            :style="{ backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'][index % 6] }">
+                        </div>
                         <div class="legend-text">
                             <span>{{ status.orderStatus }}</span>
                             <span class="legend-value">{{ formatPercentage(status.percentage) }}</span>
@@ -663,7 +643,8 @@ function formatDate(dateString: string): string {
     color: #333;
 }
 
-.loading, .no-data {
+.loading,
+.no-data {
     text-align: center;
     padding: 50px;
     color: #999;
@@ -690,23 +671,27 @@ function formatDate(dateString: string): string {
 
 .chart-area {
     display: flex;
-    height: 300px; /* 固定高度 */
+    height: 300px;
+    /* 固定高度 */
 }
 
 .y-axis {
     display: flex;
-    flex-direction: column-reverse; /* 确保数值从下到上递增 */
+    flex-direction: column-reverse;
+    /* 确保数值从下到上递增 */
     justify-content: space-between;
     padding-right: 10px;
     width: 60px;
     font-size: 0.8rem;
     color: #666;
     text-align: right;
-    margin-bottom: 40px; /* 留出 X 轴标签空间 */
+    margin-bottom: 40px;
+    /* 留出 X 轴标签空间 */
 }
 
 .y-tick {
-    height: 30px; /* 匹配 canvas 绘制时的水平网格线 */
+    height: 30px;
+    /* 匹配 canvas 绘制时的水平网格线 */
     line-height: 30px;
 }
 
@@ -752,7 +737,8 @@ function formatDate(dateString: string): string {
     border-collapse: collapse;
 }
 
-.top-products th, .top-products td {
+.top-products th,
+.top-products td {
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid #eee;
@@ -796,15 +782,17 @@ function formatDate(dateString: string): string {
 /* 订单状态饼图样式 */
 .order-status {
     display: flex;
-    justify-content: center; /* 修改为居中排列 */
+    justify-content: center;
+    /* 修改为居中排列 */
     align-items: center;
     flex-wrap: wrap;
-    gap: 40px; /* 添加间距 */
+    gap: 40px;
+    /* 添加间距 */
 }
 
 .pie-chart-container {
     /* 缩小饼状图容器尺寸 */
-    width: 300px; 
+    width: 300px;
     height: 300px;
     position: relative;
 }
