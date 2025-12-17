@@ -31,7 +31,7 @@ public class AuthFilter implements Filter {
         HttpServletResponse resp = (HttpServletResponse) response;
 
         // ⭐ 1. 【新增】处理 CORS 预检请求 (OPTIONS) 和设置 CORS 头部
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173"); // 允许你的前端地址
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:8081"); // 允许你的前端地址
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // 允许 JWT Token 头部
         resp.setHeader("Access-Control-Allow-Credentials", "true"); // 允许携带 Cookie/Session

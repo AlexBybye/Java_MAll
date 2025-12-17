@@ -3,9 +3,7 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/auth'; // 假设你的 Pinia Store 在此路径
 
-// 基础 URL 应该与你的后端 Tomcat 服务器地址和 Application Context 匹配
-// 示例: http://localhost:8080/api
-const BASE_URL = 'http://localhost:8080/api'; 
+const BASE_URL = '/api'; 
 
 // 1. 创建 Axios 实例
 const api: AxiosInstance = axios.create({
