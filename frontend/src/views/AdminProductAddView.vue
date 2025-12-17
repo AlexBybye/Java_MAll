@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import api from '@/utils/http';
 import type { AdminProduct } from '@/types';
-import { validateImageUrl, checkImageLoadable } from '@/utils/imageUtils'; // 导入图片处理工具
+import { validateImageUrl, checkImageLoadable } from '@/utils/imageUtils';
 
 const router = useRouter();
 const authStore = useAuthStore();

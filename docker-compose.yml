@@ -5,7 +5,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "80:80"
+      - "8081:80"  # 修改这里，将80改为8081
     depends_on:
       - backend
     networks:

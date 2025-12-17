@@ -33,7 +33,7 @@ CREATE TABLE `customer` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商城顾客表';
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商城顾客表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'testuser01','password123','test_mail_01@yourdomain.com','13800000001','2025-12-11 09:18:52',0),(3,'testuser02','password123','test_mail_02@yourdomain.com','13800000011','2025-12-12 16:54:11',0),(4,'newuser','123456','1r@test.com1','13236782811','2025-12-12 17:01:22',0),(5,'testuser_complete','testpassword123','updated_testuser_complete@example.com','13800000002','2025-12-12 18:54:18',0),(6,'admin','adminVIP','admin@domain.com','10000000000','2025-12-12 19:22:55',1),(10,'newuser1','123456','newuser1@test.com','13888888888','2025-12-13 09:51:07',0),(11,'newuser0','123456','newuser0@test.com','13888888888','2025-12-13 09:51:17',0),(12,'testvip','123456','testvip@test.com','13888888888','2025-12-13 11:26:14',0),(15,'newuser11','123456','newuser11@test.com','13888888888','2025-12-13 11:37:16',0),(16,'testvip1','123456','1@test','13888888888','2025-12-13 11:57:40',0),(17,'testvip11','123456','1r@test.com','13888888888','2025-12-13 12:11:49',0),(18,'newuser_test','newUserPass123','newuser@example.com','13800000002','2025-12-13 12:30:44',0),(19,'newadmin_test','newAdminPass123','newadmin@example.com','13800000003','2025-12-13 12:30:47',1),(21,'admin11','123456','244417287@qq.com','13909874623','2025-12-13 12:33:17',1);
+INSERT INTO `customer` VALUES (1,'于博宇','123456','13909874623@163.com','13909874623','2025-12-13 20:05:57',0),(2,'奸商王泓嘉','123456','244417287@qq.com','13909874623','2025-12-13 20:09:00',1),(3,'shaoxinyu','password123','shaoxinyu@example.com','13800000010','2025-12-14 00:06:20',0),(4,'xuzirui','password123','xuzirui@example.com','13800000011','2025-12-14 00:06:20',0),(5,'zhaoshendi','password123','zhaoshendi@example.com','13800000012','2025-12-14 00:06:20',0),(6,'renxingyu','password123','renxingyu@example.com','13800000013','2025-12-14 00:06:20',0),(7,'lihaoran','password123','lihaoran@example.com','13800000014','2025-12-14 00:06:20',0),(8,'wangjianing','password123','wangjianing@example.com','13800000015','2025-12-14 00:06:20',0),(9,'chensiyuan','password123','chensiyuan@example.com','13800000016','2025-12-14 00:06:20',0),(10,'liusihan','password123','liusihan@example.com','13800000017','2025-12-14 00:06:20',0);
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-14  2:43:23
+-- Dump completed on 2025-12-15 21:06:17
