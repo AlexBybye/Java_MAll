@@ -7,9 +7,11 @@ import java.sql.SQLException;
 public class DBUtil {
 
     // 从环境变量获取数据库连接信息
+
     private static final String URL = System.getenv("DB_URL") != null ? 
-        System.getenv("DB_URL") : "jdbc:mysql://localhost:3306/mall_system?useSSL=false&serverTimezone=Asia/Shanghai";
-    
+        System.getenv("DB_URL") : 
+        "jdbc:mysql://mysql:3306/mall_system?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true";
+
     private static final String USER = System.getenv("DB_USER") != null ? 
         System.getenv("DB_USER") : "root";
     

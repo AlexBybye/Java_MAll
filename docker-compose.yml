@@ -19,7 +19,7 @@ services:
     depends_on:
       - mysql
     environment:
-      - DB_URL=jdbc:mysql://mysql:3306/mall_system?useSSL=false&serverTimezone=UTC
+      - DB_URL=jdbc:mysql://mysql:3306/mall_system?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - DB_USER=root
       - DB_PASSWORD=Mimashi1
     networks:
