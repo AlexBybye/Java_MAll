@@ -52,13 +52,14 @@ public class AuthFilter implements Filter {
         System.out.println("--- AuthFilter 拦截请求: " + requestPath);
 
 // 1. 首先检查是否需要放行（重要：放在Token验证之前）
-// 放行登录/注册和产品的GET请求
-        if (requestPath.endsWith("/login") || requestPath.endsWith("/register") ||
-                (requestPath.startsWith("/product") && "GET".equalsIgnoreCase(req.getMethod()))) {
-            System.out.println("--- AuthFilter 放行请求: " + requestPath);
-            chain.doFilter(request, response);
-            return;
-        }
+// 放行登录/注册、根路径、index.jsp和产品的GET请求
+if (requestPath.equals("/") || requestPath.endsWith("/index.jsp") || 
+        requestPath.endsWith("/login") || requestPath.endsWith("/register") ||
+        (requestPath.startsWith("/product") && "GET".equalsIgnoreCase(req.getMethod()))) {
+    System.out.println("--- AuthFilter 放行请求: " + requestPath);
+    chain.doFilter(request, response);
+    return;
+}
 
 // 2. 其他请求需要进行Token验证
 // 获取Token
