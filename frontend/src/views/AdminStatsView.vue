@@ -123,7 +123,7 @@ async function loadStatsData() {
                 else if (date instanceof Date) {
                     date = date.toISOString();
                 }
-                // 如果日期是数字（时间戳），转换为ISO字符串
+// 如果日期是数字（时间戳），转换为ISO字符串
                 else if (typeof date === 'number') {
                     date = new Date(date).toISOString();
                 }
@@ -479,6 +479,10 @@ function formatDate(dateString: string): string {
                             <div class="y-axis">
                                 <div v-for="i in 6" :key="i" class="y-tick">
                                     {{ formatCurrency((maxSalesAmount * (5 - i + 1)) / 5) }}
+                                </div>
+                                <!-- 修改后 -->
+                                <div v-for="i in 6" :key="i" class="y-tick">
+                                    {{ formatCurrency((maxSalesAmount * i) / 5) }}
                                 </div>
                             </div>
                             <div class="chart-grid">

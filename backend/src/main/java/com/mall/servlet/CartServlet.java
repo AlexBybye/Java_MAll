@@ -104,8 +104,8 @@ public class CartServlet extends HttpServlet {
                 sendJsonResponse(response, HttpServletResponse.SC_OK, result);
             } else {
                 result.put("success", false);
-                result.put("message", "操作失败，可能商品或用户不存在。");
-                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, result);
+                result.put("message", "操作失败，可能商品不存在、已售罄或库存不足。");
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, result);
             }
         } catch (Exception e) {
             e.printStackTrace();

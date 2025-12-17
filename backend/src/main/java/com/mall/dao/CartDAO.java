@@ -10,20 +10,33 @@ import java.util.HashMap;
 
 public class CartDAO {
 
-    // --- 1. 添加或更新购物车项 (Add/Update) ---
+    // --- 1. 添加或更新购物车项 (Add/Update) --- 
     public boolean addOrUpdateCartItem(int customerId, int productId, int quantity) {
+        // 检查商品库存
+        int stockQuantity = getProductStockQuantity(productId);
+        if (stockQuantity <= 0) {
+            return false;
+        }
+        
+        // 获取购物车中该商品的当前数量
+        int currentQuantity = getCartItemQuantity(customerId, productId);
+        
+        // 检查添加后的数量是否超过库存
+        if (currentQuantity + quantity > stockQuantity) {
+            return false;
+        }
+        
         // 使用 REPLACE INTO 或 ON DUPLICATE KEY UPDATE 语句简化逻辑
         // 我们选择 ON DUPLICATE KEY UPDATE，更灵活地处理数量
-        String sql = "INSERT INTO cart (customer_id, product_id, quantity) VALUES (?, ?, ?)"
-                + " ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
-
+        String sql = "INSERT INTO cart (customer_id, product_id, quantity) VALUES (?, ?, ?)" + 
+                     " ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
+        
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setInt(1, customerId);
             ps.setInt(2, productId);
             ps.setInt(3, quantity); // 传入的数量
-
+            
             // executeUpdate() 会返回受影响的行数，插入返回1，更新返回2
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -93,5 +106,40 @@ public class CartDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // 获取商品的库存数量
+    private int getProductStockQuantity(int productId) {
+        String sql = "SELECT stock_quantity FROM product WHERE id = ? AND is_deleted = 0";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("stock_quantity");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // 获取购物车中某商品的当前数量
+    private int getCartItemQuantity(int customerId, int productId) {
+        String sql = "SELECT quantity FROM cart WHERE customer_id = ? AND product_id = ?";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("quantity");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 }

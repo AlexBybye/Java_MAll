@@ -72,8 +72,9 @@
               {{ product.stockQuantity <= 0 ? '已售罄' : `库存: ${product.stockQuantity}` }} </span>
           </div>
 
-          <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0">
-            {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }} </button>
+          <button class="add-to-cart-btn" @click="addToCart(product.id)" :disabled="product.stockQuantity <= 0 || getCartItemQuantity(product.id) >= product.stockQuantity">
+            {{ product.stockQuantity <= 0 ? '已售罄' : '加入购物车' }}
+          </button>
         </div>
       </div>
 
@@ -189,6 +190,15 @@ function handleImageError(event: Event, product: Product) {
 
 // 添加商品到购物车
 async function addToCart(productId: number) {
+  const product = products.value.find(p => p.id === productId);
+  if (!product) return;
+  
+  const currentCartQuantity = getCartItemQuantity(productId);
+  if (currentCartQuantity >= product.stockQuantity) {
+    showNotification('购物车中该商品数量已达库存上限！', 'error');
+    return;
+  }
+  
   try {
     await cartStore.addToCart(productId, 1);
     showNotification('商品已成功添加到购物车！', 'success');
@@ -215,6 +225,12 @@ function showNotification(message: string, type: 'success' | 'error') {
 onMounted(() => {
   fetchProducts();
 });
+// 获取购物车中某商品的当前数量
+function getCartItemQuantity(productId: number): number {
+  const cartItem = cartStore.cartItems.find(item => item.product_id === productId);
+  return cartItem ? cartItem.quantity : 0;
+}
+
 </script>
 
 <!-- 在ProductListView.vue的样式部分添加以下代码 -->
