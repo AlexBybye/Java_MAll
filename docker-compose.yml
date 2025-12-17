@@ -27,7 +27,7 @@ services:
 
   # MySQL 数据库
   mysql:
-    image: mysql:8.0
+    image: docker.m.daocloud.io/library/mysql:8.0
     ports:
       - "3306:3306"
     environment:
