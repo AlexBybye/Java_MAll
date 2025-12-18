@@ -187,7 +187,11 @@ function formatCurrency(amount: number): string {
 // 计算最大销售金额（每日）
 const maxSalesAmount = computed(() => {
     if (dailySales.value.length === 0) return 1; // 避免除以0
-    const max = Math.max(...dailySales.value.map(d => d.salesAmount || 0));
+    // 只考虑销售额大于0的数据点来计算最大值
+    const validSales = dailySales.value.filter(d => (d.salesAmount || 0) > 0);
+    // 如果没有大于0的数据点，返回1
+    if (validSales.length === 0) return 1;
+    const max = Math.max(...validSales.map(d => d.salesAmount || 0));
     return max === 0 ? 1 : max; // 避免除以0
 });
 
@@ -479,9 +483,7 @@ function formatDate(dateString: string): string {
                         </div>
                         <div class="chart-area">
                             <div class="y-axis">
-                                <div v-for="i in 6" :key="i" class="y-tick">
-                                    {{ formatCurrency((maxSalesAmount * (5 - i + 1)) / 5) }}
-                                </div>
+                    
                                 <!-- 修改后 -->
                                 <div v-for="i in 6" :key="i" class="y-tick">
                                     {{ formatCurrency((maxSalesAmount * i) / 5) }}
@@ -677,7 +679,7 @@ function formatDate(dateString: string): string {
 
 .y-axis {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     /* 确保数值从下到上递增 */
     justify-content: space-between;
     padding-right: 10px;

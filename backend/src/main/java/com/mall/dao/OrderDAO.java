@@ -251,13 +251,14 @@ public class OrderDAO {
     public boolean updateOrderStatus(int orderId, String status) {
         // ... (方法体不变)
         String sql = "UPDATE order_master SET order_status = ? WHERE order_id = ?";
-
+    
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, status);
+    
+            // 将订单状态转换为全大写格式后存储
+            ps.setString(1, status.toLowerCase());
             ps.setInt(2, orderId);
-
+    
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
