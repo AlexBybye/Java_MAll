@@ -141,6 +141,7 @@ docker-compose up -d
 - 前端访问地址: `http://localhost`
 - 后端API地址: `http://localhost:8080`
 - 数据库访问地址: `localhost:3306` (用户名: root, 密码: Mimashi1)
+- 注意，本项目代码已经转换为线上模式，线下模式代码请参考commit历史中的版本
 
 ### 手动运行（可选）
 
