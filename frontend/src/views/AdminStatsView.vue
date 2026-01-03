@@ -485,7 +485,7 @@ function formatDate(dateString: string): string {
                             <div class="y-axis">
                     
                                 <!-- 修改后 -->
-                                <div v-for="i in 6" :key="i" class="y-tick">
+                                <div v-for="i in [5, 4, 3, 2, 1, 0]" :key="i" class="y-tick">
                                     {{ formatCurrency((maxSalesAmount * i) / 5) }}
                                 </div>
                             </div>
@@ -683,17 +683,17 @@ function formatDate(dateString: string): string {
     /* 确保数值从下到上递增 */
     justify-content: space-between;
     padding-right: 10px;
-    width: 60px;
+    width: 80px;
     font-size: 0.8rem;
     color: #666;
     text-align: right;
-    margin-bottom: 40px;
-    /* 留出 X 轴标签空间 */
+    height: 300px; 
+    /* 移除之前的 margin-bottom，改用 padding 补偿 X 轴高度 */
+    padding-bottom: 40px; 
+    box-sizing: border-box;
 }
 
 .y-tick {
-    height: 30px;
-    /* 匹配 canvas 绘制时的水平网格线 */
     line-height: 30px;
 }
 
@@ -832,7 +832,7 @@ function formatDate(dateString: string): string {
     margin-left: 10px;
 }
 
-/* MonthHeatmap 组件的样式 (如果 MonthHeatmap.vue 没有样式，这里可以提供容器样式) */
+
 .month-heatmap-container {
     max-width: 100%;
     margin: 20px auto;
